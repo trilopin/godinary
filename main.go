@@ -1,7 +1,13 @@
 package main
 
-import "github.com/trilopin/godinary/server"
+import (
+	"flag"
+
+	"github.com/trilopin/godinary/server"
+)
 
 func main() {
-	server.StartServer()
+	port := flag.Int("port", 3001, "Port to listen to")
+	flag.Parse()
+	server.StartServer(*port)
 }

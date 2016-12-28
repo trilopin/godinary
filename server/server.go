@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/trilopin/godinary/image"
@@ -27,10 +28,10 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	err = image.Process(resp.Body, job, w)
 }
 
-func StartServer() {
+func StartServer(port int) {
 	router := httprouter.New()
 	router.GET("/", Index)
 	router.GET("/v0.1/:account/fetch/*info", Fetch)
-
-	log.Fatal(http.ListenAndServe(":3001", router))
+	fmt.Println("Listening on port", port)
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), router))
 }

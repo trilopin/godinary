@@ -2,30 +2,38 @@ package parser
 
 import (
 	"errors"
+	"image"
+	"io"
+	"net"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/disintegration/imaging"
 )
 
-// Job stores info for image processing
-type Job struct {
-	SourceURL     string
-	SourceWidth   int
-	SourceHeight  int
-	DesiredWidth  int
-	DesiredHeight int
-	DesiredFormat string
-	FixedRatio    bool
-	Filters       map[string]string
+// ImageJob stores info for image processing
+type ImageJob struct {
+	Image        image.Image
+	SourceURL    string
+	SourceWidth  int
+	SourceHeight int
+	TargetWidth  int
+	TargetHeight int
+	TargetFormat string
+	FixedRatio   bool
+	Filters      map[string]string
 }
 
-// Parse takes a string from URL and returns structured info as Job
-func (job *Job) New(fetchData string) error {
+// New creates a Job struct from string
+func (img *ImageJob) New(fetchData string) error {
 	var offset int
 	var err error
 
-	job.Filters = map[string]string{}
-	job.FixedRatio = false
+	img.Filters = map[string]string{}
+	img.FixedRatio = false
 
 	parts := strings.SplitN(fetchData, "/", 2)
 	if parts[0] != "http:" {
@@ -34,14 +42,14 @@ func (job *Job) New(fetchData string) error {
 			filter := strings.Split(v, "_")
 			switch filter[0] {
 			case "h":
-				job.DesiredHeight, err = strconv.Atoi(filter[1])
+				img.TargetHeight, err = strconv.Atoi(filter[1])
 				if err != nil {
-					return errors.New("DesiredHeight is not integer")
+					return errors.New("TargetHeight is not integer")
 				}
 			case "w":
-				job.DesiredWidth, err = strconv.Atoi(filter[1])
+				img.TargetWidth, err = strconv.Atoi(filter[1])
 				if err != nil {
-					return errors.New("DesiredWidth is not integer")
+					return errors.New("TargetWidth is not integer")
 				}
 			case "f":
 				allowed := map[string]bool{
@@ -53,13 +61,55 @@ func (job *Job) New(fetchData string) error {
 				if !allowed[filter[1]] {
 					return errors.New("Format not allowed")
 				}
-				job.DesiredFormat = filter[1]
+				img.TargetFormat = filter[1]
 			case "c":
-				job.FixedRatio = filter[1] == "limit"
+				img.FixedRatio = filter[1] == "limit"
 			}
 		}
 		offset = len(parts[0]) + 1
 	}
-	job.SourceURL, _ = url.QueryUnescape(fetchData[offset:])
+	img.SourceURL, _ = url.QueryUnescape(fetchData[offset:])
+	return nil
+}
+
+// Download retrieves and decodes remote image
+func (img *ImageJob) Download() error {
+
+	c := &http.Client{
+		Transport: &http.Transport{
+			Dial: (&net.Dialer{
+				Timeout:   2 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).Dial,
+			TLSHandshakeTimeout:   2 * time.Second,
+			ResponseHeaderTimeout: 2 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
+
+	if img.SourceURL == "" {
+		return errors.New("SourceURL not found in image")
+	}
+
+	resp, err := c.Get(img.SourceURL)
+	if err != nil {
+		return errors.New("Cannot download image")
+	}
+
+	image, err := imaging.Decode(resp.Body)
+	if err != nil {
+		return errors.New("Cannot decode image")
+	}
+	img.Image = image
+	bounds := image.Bounds()
+	img.SourceHeight = bounds.Max.Y
+	img.SourceWidth = bounds.Max.X
+	return nil
+}
+
+// Process transforms image
+func (img *ImageJob) Process(writer io.Writer) error {
+	transformedImg := imaging.Resize(img.Image, img.TargetWidth, img.TargetHeight, imaging.Lanczos)
+	imaging.Encode(writer, transformedImg, 0)
 	return nil
 }

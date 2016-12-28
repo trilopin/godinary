@@ -11,12 +11,12 @@ const testURL = "http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Joh
 
 var parserCases = []struct {
 	url         string
-	expected    Job
+	expected    ImageJob
 	description string
 }{
 	{
 		testURL,
-		Job{
+		ImageJob{
 			SourceURL:  testURL,
 			Filters:    map[string]string{},
 			FixedRatio: false,
@@ -25,59 +25,59 @@ var parserCases = []struct {
 	},
 	{
 		"w_400/" + testURL,
-		Job{
-			SourceURL:    testURL,
-			Filters:      map[string]string{},
-			DesiredWidth: 400,
-			FixedRatio:   false,
+		ImageJob{
+			SourceURL:   testURL,
+			Filters:     map[string]string{},
+			TargetWidth: 400,
+			FixedRatio:  false,
 		},
 		"with one filter",
 	},
 	{
 		"w_400,c_limit,h_600,f_jpg/" + testURL,
-		Job{
-			SourceURL:     testURL,
-			Filters:       map[string]string{},
-			DesiredWidth:  400,
-			DesiredHeight: 600,
-			DesiredFormat: "jpg",
-			FixedRatio:    true,
+		ImageJob{
+			SourceURL:    testURL,
+			Filters:      map[string]string{},
+			TargetWidth:  400,
+			TargetHeight: 600,
+			TargetFormat: "jpg",
+			FixedRatio:   true,
 		},
 		"with multiple filter jpg",
 	},
 	{
 		"w_400,c_limit,h_600,f_png/" + testURL,
-		Job{
-			SourceURL:     testURL,
-			Filters:       map[string]string{},
-			DesiredWidth:  400,
-			DesiredHeight: 600,
-			DesiredFormat: "png",
-			FixedRatio:    true,
+		ImageJob{
+			SourceURL:    testURL,
+			Filters:      map[string]string{},
+			TargetWidth:  400,
+			TargetHeight: 600,
+			TargetFormat: "png",
+			FixedRatio:   true,
 		},
 		"with multiple filter png",
 	},
 	{
 		"w_400,c_limit,h_600,f_gif/" + testURL,
-		Job{
-			SourceURL:     testURL,
-			Filters:       map[string]string{},
-			DesiredWidth:  400,
-			DesiredHeight: 600,
-			DesiredFormat: "gif",
-			FixedRatio:    true,
+		ImageJob{
+			SourceURL:    testURL,
+			Filters:      map[string]string{},
+			TargetWidth:  400,
+			TargetHeight: 600,
+			TargetFormat: "gif",
+			FixedRatio:   true,
 		},
 		"with multiple filter gif",
 	},
 	{
 		"w_400,c_limit,h_600,f_jpeg/" + testURL,
-		Job{
-			SourceURL:     testURL,
-			Filters:       map[string]string{},
-			DesiredWidth:  400,
-			DesiredHeight: 600,
-			DesiredFormat: "jpeg",
-			FixedRatio:    true,
+		ImageJob{
+			SourceURL:    testURL,
+			Filters:      map[string]string{},
+			TargetWidth:  400,
+			TargetHeight: 600,
+			TargetFormat: "jpeg",
+			FixedRatio:   true,
 		},
 		"with multiple filter jpeg",
 	},
@@ -85,10 +85,10 @@ var parserCases = []struct {
 
 func TestNew(t *testing.T) {
 	for _, test := range parserCases {
-		job := Job{}
-		err := job.New(test.url)
+		img := ImageJob{}
+		err := img.New(test.url)
 		assert.Nil(t, err)
-		assert.Equal(t, test.expected, job, test.description)
+		assert.Equal(t, test.expected, img, test.description)
 	}
 }
 
@@ -104,20 +104,53 @@ var parserErrorCases = []struct {
 	},
 	{
 		"w_400,c_limit,h_pp/" + testURL,
-		errors.New("DesiredHeight is not integer"),
-		"DesiredHeight is not integer",
+		errors.New("TargetHeight is not integer"),
+		"TargetHeight is not integer",
 	},
 	{
 		"w_OOO,c_limit,h_500/" + testURL,
-		errors.New("DesiredWidth is not integer"),
-		"DesiredWidth is not integer",
+		errors.New("TargetWidth is not integer"),
+		"TargetWidth is not integer",
 	},
 }
 
-func TestParseWithError(t *testing.T) {
+func TestNewWithError(t *testing.T) {
 	for _, test := range parserErrorCases {
-		job := Job{}
-		err := job.New(test.url)
+		img := ImageJob{}
+		err := img.New(test.url)
 		assert.Equal(t, test.err, err, test.description)
 	}
+}
+
+func TestDownload(t *testing.T) {
+	img := ImageJob{SourceURL: testURL}
+	err := img.Download()
+	assert.Nil(t, err)
+	assert.NotNil(t, img.Image, "Downloaded image should be not nil")
+	assert.Equal(t, img.SourceHeight, 800)
+	assert.Equal(t, img.SourceWidth, 566)
+}
+
+func TestDownloadFailBecauseNoURL(t *testing.T) {
+	img := ImageJob{}
+	err := img.Download()
+	assert.Nil(t, img.Image)
+	assert.Equal(t, err, errors.New("SourceURL not found in image"))
+	assert.NotNil(t, err)
+}
+
+func TestDownloadFailBecauseBadURL(t *testing.T) {
+	img := ImageJob{SourceURL: "fake"}
+	err := img.Download()
+	assert.Nil(t, img.Image)
+	assert.Equal(t, err, errors.New("Cannot download image"))
+	assert.NotNil(t, err)
+}
+
+func TestDownloadFailBecauseNoImage(t *testing.T) {
+	img := ImageJob{SourceURL: "https://github.com"}
+	err := img.Download()
+	assert.Nil(t, img.Image)
+	assert.Equal(t, err, errors.New("Cannot decode image"))
+	assert.NotNil(t, err)
 }

@@ -7,7 +7,6 @@ import (
 	"strconv"
 
 	"github.com/julienschmidt/httprouter"
-	"github.com/trilopin/godinary/image"
 	"github.com/trilopin/godinary/parser"
 )
 
@@ -16,17 +15,12 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	job := parser.Job{}
-	err := job.New(ps.ByName("info")[1:])
-	if err != nil {
-		log.Fatal("Invalid request")
-	}
-	resp, err := http.Get(job.SourceURL)
-	if err != nil {
-		log.Fatal("Cannot get url " + job.SourceURL)
-	}
-	w.Header().Set("Content-Type", "image/jpeg")
-	err = image.Process(resp.Body, job, w)
+
+	img := parser.ImageJob{}
+	_ = img.New(ps.ByName("info")[1:])
+	_ = img.Download()
+	_ = img.Process(w)
+	w.Header().Set("Content-Type", "image/"+img.TargetFormat)
 }
 
 func StartServer(port int) {

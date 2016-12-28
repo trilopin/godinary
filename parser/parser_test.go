@@ -83,11 +83,12 @@ var parserCases = []struct {
 	},
 }
 
-func TestParse(t *testing.T) {
+func TestNew(t *testing.T) {
 	for _, test := range parserCases {
-		observed, err := Parse(test.url)
+		job := Job{}
+		err := job.New(test.url)
 		assert.Nil(t, err)
-		assert.Equal(t, test.expected, observed, test.description)
+		assert.Equal(t, test.expected, job, test.description)
 	}
 }
 
@@ -115,7 +116,8 @@ var parserErrorCases = []struct {
 
 func TestParseWithError(t *testing.T) {
 	for _, test := range parserErrorCases {
-		_, err := Parse(test.url)
+		job := Job{}
+		err := job.New(test.url)
 		assert.Equal(t, test.err, err, test.description)
 	}
 }

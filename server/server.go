@@ -16,7 +16,8 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	job, err := parser.Parse(ps.ByName("info")[1:])
+	job := parser.Job{}
+	err := job.New(ps.ByName("info")[1:])
 	if err != nil {
 		log.Fatal("Invalid request")
 	}

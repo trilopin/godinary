@@ -20,8 +20,7 @@ type Job struct {
 }
 
 // Parse takes a string from URL and returns structured info as Job
-func Parse(fetchData string) (Job, error) {
-	var job Job
+func (job *Job) New(fetchData string) error {
 	var offset int
 	var err error
 
@@ -37,12 +36,12 @@ func Parse(fetchData string) (Job, error) {
 			case "h":
 				job.DesiredHeight, err = strconv.Atoi(filter[1])
 				if err != nil {
-					return job, errors.New("DesiredHeight is not integer")
+					return errors.New("DesiredHeight is not integer")
 				}
 			case "w":
 				job.DesiredWidth, err = strconv.Atoi(filter[1])
 				if err != nil {
-					return job, errors.New("DesiredWidth is not integer")
+					return errors.New("DesiredWidth is not integer")
 				}
 			case "f":
 				allowed := map[string]bool{
@@ -52,7 +51,7 @@ func Parse(fetchData string) (Job, error) {
 					"gif":  true,
 				}
 				if !allowed[filter[1]] {
-					return job, errors.New("Format not allowed")
+					return errors.New("Format not allowed")
 				}
 				job.DesiredFormat = filter[1]
 			case "c":
@@ -62,5 +61,5 @@ func Parse(fetchData string) (Job, error) {
 		offset = len(parts[0]) + 1
 	}
 	job.SourceURL, _ = url.QueryUnescape(fetchData[offset:])
-	return job, nil
+	return nil
 }

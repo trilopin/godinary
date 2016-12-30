@@ -109,6 +109,9 @@ func (img *ImageJob) Download() error {
 
 // Process transforms image
 func (img *ImageJob) Process(writer io.Writer) error {
+	if img.Image == nil {
+		return errors.New("Image not found")
+	}
 	transformedImg := imaging.Resize(img.Image, img.TargetWidth, img.TargetHeight, imaging.Lanczos)
 	imaging.Encode(writer, transformedImg, 0)
 	return nil

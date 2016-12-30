@@ -15,7 +15,7 @@ godinary --port=8080
 
 Use it
 ```
-http://localhost:8080/v0.1/accountname/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
+http://localhost:8080/v0.1/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
 ```
 
 Parameters:

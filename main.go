@@ -18,9 +18,25 @@ func main() {
 
 	router.GET("/v0.1/fetch/*info", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		img := imagejob.ImageJob{}
-		_ = img.New(ps.ByName("info")[1:])
-		_ = img.Download()
-		_ = img.Process(w)
+
+		err := img.New(ps.ByName("info")[1:])
+		if err != nil {
+			http.Error(w, "Bad request", http.StatusBadRequest)
+			return
+		}
+
+		err = img.Download()
+		if err != nil {
+			http.Error(w, "Cannot download image", http.StatusInternalServerError)
+			return
+		}
+
+		err = img.Process(w)
+		if err != nil {
+			http.Error(w, "Cannot process Image", http.StatusInternalServerError)
+			return
+		}
+
 		w.Header().Set("Content-Type", "image/"+img.TargetFormat)
 	})
 

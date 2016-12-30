@@ -2,12 +2,22 @@ package imagejob
 
 import (
 	"errors"
+	"io/ioutil"
+	"os"
 	"testing"
 
+	"github.com/disintegration/imaging"
 	"github.com/stretchr/testify/assert"
 )
 
 const testURL = "http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
+
+var testFiles = map[string]string{
+	"jpg":  "testdata/fiveyears.jpg",
+	"jpeg": "testdata/highres_315125112.jpeg",
+	"gif":  "testdata/Jake_ma_kanapke.gif",
+	"png":  "testdata/baboon.png",
+}
 
 var parserCases = []struct {
 	url         string
@@ -153,4 +163,41 @@ func TestDownloadFailBecauseNoImage(t *testing.T) {
 	assert.Nil(t, img.Image)
 	assert.Equal(t, err, errors.New("Cannot decode image"))
 	assert.NotNil(t, err)
+}
+
+func TestProcess(t *testing.T) {
+	for _, test := range testFiles {
+		img, _ := imaging.Open(test)
+		out, _ := ioutil.TempFile("/tmp/", "godinary")
+		image := ImageJob{
+			Image:        img,
+			Filters:      map[string]string{},
+			TargetWidth:  40,
+			TargetHeight: 60,
+			TargetFormat: "jpg",
+			FixedRatio:   true,
+		}
+		err := image.Process(out)
+		assert.Nil(t, err)
+
+		resImg, _ := imaging.Open(out.Name())
+		bounds := resImg.Bounds()
+		assert.Equal(t, bounds.Max.Y, 60)
+		assert.Equal(t, bounds.Max.X, 40)
+		os.Remove(out.Name())
+	}
+}
+
+func TestProcessFail(t *testing.T) {
+	out, _ := ioutil.TempFile("/tmp/", "godinary")
+	image := ImageJob{
+		Filters:      map[string]string{},
+		TargetWidth:  40,
+		TargetHeight: 60,
+		TargetFormat: "jpg",
+		FixedRatio:   true,
+	}
+	err := image.Process(out)
+	assert.Nil(t, image.Image)
+	assert.Equal(t, err, errors.New("Image not found"))
 }

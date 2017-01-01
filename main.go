@@ -17,22 +17,24 @@ func main() {
 	router := httprouter.New()
 
 	router.GET("/v0.1/fetch/*info", func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+		if r.Method != "GET" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+
 		img := imagejob.ImageJob{}
 
-		err := img.New(ps.ByName("info")[1:])
-		if err != nil {
+		if err := img.New(ps.ByName("info")[1:]); err != nil {
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
 		}
 
-		err = img.Download()
-		if err != nil {
+		if err := img.Download(); err != nil {
 			http.Error(w, "Cannot download image", http.StatusInternalServerError)
 			return
 		}
 
-		err = img.Process(w)
-		if err != nil {
+		if err := img.Process(w); err != nil {
 			http.Error(w, "Cannot process Image", http.StatusInternalServerError)
 			return
 		}

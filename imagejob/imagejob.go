@@ -91,9 +91,7 @@ func Download(img *ImageJob) (io.Reader, error) {
 		return nil, errors.New("SourceURL not found in image")
 	}
 
-	globalSemaphore <- struct{}{}
 	resp, err := c.Get(img.SourceURL)
-	<-globalSemaphore
 	if err != nil {
 		return nil, errors.New("Cannot download image")
 	}

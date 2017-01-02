@@ -32,7 +32,10 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
+	globalSemaphore <- struct{}{}
 	body, err := Download(&img)
+	<-globalSemaphore
+
 	if err != nil {
 		http.Error(w, "Cannot download image", http.StatusInternalServerError)
 		return

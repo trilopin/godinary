@@ -74,7 +74,7 @@ func (img *ImageJob) New(fetchData string) error {
 
 // Download retrieves and decodes remote image using a semaphore to control
 // maximum level of concurrency
-func (img *ImageJob) Download(chan struct{}) error {
+func (img *ImageJob) Download() error {
 
 	c := &http.Client{
 		Transport: &http.Transport{

@@ -30,7 +30,7 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if err := img.Download(sema); err != nil {
+	if err := img.Download(); err != nil {
 		http.Error(w, "Cannot download image", http.StatusInternalServerError)
 		return
 	}

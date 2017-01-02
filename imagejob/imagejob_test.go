@@ -134,35 +134,46 @@ func TestNewWithError(t *testing.T) {
 
 func TestDownload(t *testing.T) {
 	img := ImageJob{SourceURL: testURL}
-	err := img.Download()
+	body, err := Download(&img)
 	assert.Nil(t, err)
-	assert.NotNil(t, img.Image, "Downloaded image should be not nil")
-	assert.Equal(t, img.SourceHeight, 800)
-	assert.Equal(t, img.SourceWidth, 566)
+	assert.NotNil(t, body)
+	//assert.NotNil(t, img.Image, "Downloaded image should be not nil")
+	//assert.Equal(t, img.SourceHeight, 800)
+	//assert.Equal(t, img.SourceWidth, 566)
 }
 
 func TestDownloadFailBecauseNoURL(t *testing.T) {
 	img := ImageJob{}
-	err := img.Download()
-	assert.Nil(t, img.Image)
+	body, err := Download(&img)
+	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("SourceURL not found in image"))
-	assert.NotNil(t, err)
 }
 
 func TestDownloadFailBecauseBadURL(t *testing.T) {
 	img := ImageJob{SourceURL: "fake"}
-	err := img.Download()
-	assert.Nil(t, img.Image)
+	body, err := Download(&img)
+	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("Cannot download image"))
-	assert.NotNil(t, err)
 }
 
-func TestDownloadFailBecauseNoImage(t *testing.T) {
+func TestDecodeFail(t *testing.T) {
 	img := ImageJob{SourceURL: "https://github.com"}
-	err := img.Download()
+	body, _ := Download(&img)
+	err := img.Decode(body)
 	assert.Nil(t, img.Image)
+	assert.NotNil(t, body)
 	assert.Equal(t, err, errors.New("Cannot decode image"))
-	assert.NotNil(t, err)
+}
+
+func TestDecode(t *testing.T) {
+	img := ImageJob{SourceURL: testURL}
+	body, _ := Download(&img)
+	err := img.Decode(body)
+	assert.Nil(t, err)
+	assert.NotNil(t, body)
+	assert.NotNil(t, img.Image, "Downloaded image should be not nil")
+	assert.Equal(t, img.SourceHeight, 800)
+	assert.Equal(t, img.SourceWidth, 566)
 }
 
 func TestProcess(t *testing.T) {

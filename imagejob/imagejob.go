@@ -72,9 +72,8 @@ func (img *ImageJob) New(fetchData string) error {
 	return nil
 }
 
-// Download retrieves and decodes remote image using a semaphore to control
-// maximum level of concurrency
-func (img *ImageJob) Download() error {
+// Download retrieves url into io.Reader
+func Download(img *ImageJob) (io.Reader, error) {
 
 	c := &http.Client{
 		Transport: &http.Transport{
@@ -89,17 +88,21 @@ func (img *ImageJob) Download() error {
 	}
 
 	if img.SourceURL == "" {
-		return errors.New("SourceURL not found in image")
+		return nil, errors.New("SourceURL not found in image")
 	}
 
 	globalSemaphore <- struct{}{}
 	resp, err := c.Get(img.SourceURL)
 	<-globalSemaphore
 	if err != nil {
-		return errors.New("Cannot download image")
+		return nil, errors.New("Cannot download image")
 	}
+	return resp.Body, nil
+}
 
-	image, err := imaging.Decode(resp.Body)
+// Decode takes body reader and loads image into struct
+func (img *ImageJob) Decode(body io.Reader) error {
+	image, err := imaging.Decode(body)
 	if err != nil {
 		return errors.New("Cannot decode image")
 	}

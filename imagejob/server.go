@@ -17,6 +17,7 @@ var globalSemaphore = make(chan struct{}, func() int {
 	return maxRequests
 }())
 
+// Fetch takes url + params in url to download iamge from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	if r.Method != "GET" {
@@ -31,10 +32,13 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if err := img.Download(); err != nil {
+	body, err := Download(&img)
+	if err != nil {
 		http.Error(w, "Cannot download image", http.StatusInternalServerError)
 		return
 	}
+
+	img.Decode(body)
 
 	if err := img.Process(w); err != nil {
 		http.Error(w, "Cannot process Image", http.StatusInternalServerError)

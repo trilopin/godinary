@@ -72,8 +72,9 @@ func (img *ImageJob) New(fetchData string) error {
 	return nil
 }
 
-// Download retrieves and decodes remote image
-func (img *ImageJob) Download() error {
+// Download retrieves and decodes remote image using a semaphore to control
+// maximum level of concurrency
+func (img *ImageJob) Download(chan struct{}) error {
 
 	c := &http.Client{
 		Transport: &http.Transport{
@@ -91,7 +92,9 @@ func (img *ImageJob) Download() error {
 		return errors.New("SourceURL not found in image")
 	}
 
+	sema <- struct{}{}
 	resp, err := c.Get(img.SourceURL)
+	<-sema
 	if err != nil {
 		return errors.New("Cannot download image")
 	}

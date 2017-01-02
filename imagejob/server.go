@@ -16,14 +16,7 @@ var sema = make(chan struct{}, func() int {
 	return maxRequests
 }())
 
-//func getMaxRequests() int {
-//
-//}
-
 func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// make use of a semaphore, MaxRequests is maximum level of concurrency
-	sema <- struct{}{}
-	defer func() { <-sema }()
 
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -37,7 +30,7 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	if err := img.Download(); err != nil {
+	if err := img.Download(sema); err != nil {
 		http.Error(w, "Cannot download image", http.StatusInternalServerError)
 		return
 	}

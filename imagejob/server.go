@@ -8,7 +8,8 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-var sema = make(chan struct{}, func() int {
+// globalSemaphore controls concurrent http client requests
+var globalSemaphore = make(chan struct{}, func() int {
 	maxRequests, err := strconv.Atoi(os.Getenv("GODINARY_MAX_REQUEST"))
 	if maxRequests == 0 || err != nil {
 		return 20

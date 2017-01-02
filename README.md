@@ -12,6 +12,13 @@ Start server
 godinary
 ```
 
+
+Docker
+```
+go build -o main .
+docker build -t godinary .
+```
+
 Configuration (via env vars)
 ```
 - GODINARY_MAX_REQUEST: number of concurrent external requests (default 20)
@@ -32,8 +39,7 @@ Parameters:
 - f: format (jpg, jpeg, png, gif allowed)
 
 TODO:
-- remove julienschmidt/httprouter dependency: need to solve weird double slash replacement in default go http mux 
+- remove julienschmidt/httprouter dependency: need to solve weird double slash replacement in default go http mux
 - reduce/optimize resulting images
 - concurrency: global semaphore included, a semaphore per domain should be great
-- dockerify
 - log & better error handling

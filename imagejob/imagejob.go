@@ -131,14 +131,17 @@ func (img *ImageJob) extractInfo() error {
 	return nil
 }
 
+// crop calculates the best strategy to crop the image
 func (img *ImageJob) crop() error {
 	switch img.Filters["crop"] {
+	// Preserve aspect ratio, bigger dimension is selected
 	case "fit":
 		if img.TargetHeight > img.TargetWidth {
 			img.TargetWidth = 0
 		} else {
 			img.TargetHeight = 0
 		}
+		// Same as Fit but limiting size to original image
 	case "limit":
 		if img.TargetHeight > img.SourceHeight || img.TargetWidth > img.SourceWidth {
 			img.TargetWidth = img.SourceWidth
@@ -160,6 +163,7 @@ func (img *ImageJob) Process(writer io.Writer) error {
 	if img.Image == nil {
 		return errors.New("Image not found")
 	}
+	// Tweaks height and width parameters (Resize will launch it)
 	img.crop()
 
 	log.Printf(

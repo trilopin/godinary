@@ -18,6 +18,7 @@ func init() {
 	if Port == "" {
 		Port = "3002"
 	}
+	log.SetOutput(os.Stdout)
 }
 
 func main() {

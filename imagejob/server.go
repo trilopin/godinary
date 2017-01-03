@@ -27,7 +27,7 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	img := ImageJob{}
 
-	if err := img.New(ps.ByName("info")[1:]); err != nil {
+	if err := img.Parse(ps.ByName("info")[1:]); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}

@@ -41,9 +41,6 @@ func (img *ImageJob) Parse(fetchData string) error {
 	var offset int
 	var err error
 
-	img.Filters = make(map[string]string)
-	img.Filters["crop"] = "scale"
-
 	parts := strings.SplitN(fetchData, "/", 2)
 	if parts[0] != "http:" {
 		filters := strings.Split(parts[0], ",")

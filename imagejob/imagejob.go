@@ -4,6 +4,7 @@ import (
 	"errors"
 	"image"
 	"io"
+	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -16,24 +17,29 @@ import (
 
 // ImageJob stores info for image processing
 type ImageJob struct {
-	Image        image.Image
-	SourceURL    string
-	SourceWidth  int
-	SourceHeight int
-	TargetWidth  int
-	TargetHeight int
-	TargetFormat string
-	FixedRatio   bool
-	Filters      map[string]string
+	Image             image.Image
+	SourceURL         string
+	SourceWidth       int
+	SourceHeight      int
+	SourceAspectRatio float32
+	TargetWidth       int
+	TargetHeight      int
+	TargetFormat      string
+	Filters           map[string]string
 }
 
-// New creates a Job struct from string
-func (img *ImageJob) New(fetchData string) error {
+// NewImageJob constructs a default empty struct and return a pointer to it
+func NewImageJob() *ImageJob {
+	var job ImageJob
+	job.Filters = make(map[string]string)
+	job.Filters["crop"] = "scale"
+	return &job
+}
+
+// Parse creates a Job struct from string
+func (img *ImageJob) Parse(fetchData string) error {
 	var offset int
 	var err error
-
-	img.Filters = map[string]string{}
-	img.FixedRatio = false
 
 	parts := strings.SplitN(fetchData, "/", 2)
 	if parts[0] != "http:" {
@@ -63,7 +69,15 @@ func (img *ImageJob) New(fetchData string) error {
 				}
 				img.TargetFormat = filter[1]
 			case "c":
-				img.FixedRatio = filter[1] == "limit"
+				allowed := map[string]bool{
+					"limit": true,
+					"fit":   true,
+					"scale": true,
+				}
+				if !allowed[filter[1]] {
+					return errors.New("Crop not allowed")
+				}
+				img.Filters["crop"] = filter[1]
 			}
 		}
 		offset = len(parts[0]) + 1
@@ -72,8 +86,8 @@ func (img *ImageJob) New(fetchData string) error {
 	return nil
 }
 
-// Download retrieves and decodes remote image
-func (img *ImageJob) Download() error {
+// Download retrieves url into io.Reader
+func Download(img *ImageJob) (io.Reader, error) {
 
 	c := &http.Client{
 		Transport: &http.Transport{
@@ -88,15 +102,19 @@ func (img *ImageJob) Download() error {
 	}
 
 	if img.SourceURL == "" {
-		return errors.New("SourceURL not found in image")
+		return nil, errors.New("SourceURL not found in image")
 	}
 
 	resp, err := c.Get(img.SourceURL)
 	if err != nil {
-		return errors.New("Cannot download image")
+		return nil, errors.New("Cannot download image")
 	}
+	return resp.Body, nil
+}
 
-	image, err := imaging.Decode(resp.Body)
+// Decode takes body reader and loads image into struct
+func (img *ImageJob) Decode(body io.Reader) error {
+	image, err := imaging.Decode(body)
 	if err != nil {
 		return errors.New("Cannot decode image")
 	}
@@ -109,6 +127,34 @@ func (img *ImageJob) extractInfo() error {
 	bounds := img.Image.Bounds()
 	img.SourceHeight = bounds.Max.Y
 	img.SourceWidth = bounds.Max.X
+	img.SourceAspectRatio = float32(img.SourceWidth) / float32(img.SourceHeight)
+	return nil
+}
+
+// crop calculates the best strategy to crop the image
+func (img *ImageJob) crop() error {
+	switch img.Filters["crop"] {
+	// Preserve aspect ratio, bigger dimension is selected
+	case "fit":
+		if img.TargetHeight > img.TargetWidth {
+			img.TargetWidth = 0
+		} else {
+			img.TargetHeight = 0
+		}
+		// Same as Fit but limiting size to original image
+	case "limit":
+		if img.TargetHeight > img.SourceHeight || img.TargetWidth > img.SourceWidth {
+			img.TargetWidth = img.SourceWidth
+			img.TargetHeight = img.SourceHeight
+		} else {
+			if img.TargetHeight > img.TargetWidth {
+				img.TargetWidth = 0
+			} else {
+				img.TargetHeight = 0
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -117,6 +163,17 @@ func (img *ImageJob) Process(writer io.Writer) error {
 	if img.Image == nil {
 		return errors.New("Image not found")
 	}
+	// Tweaks height and width parameters (Resize will launch it)
+	img.crop()
+
+	log.Printf(
+		"%s from %dx%d to %dx%d",
+		img.SourceURL,
+		img.SourceWidth,
+		img.SourceHeight,
+		img.TargetWidth,
+		img.TargetHeight,
+	)
 	transformedImg := imaging.Resize(img.Image, img.TargetWidth, img.TargetHeight, imaging.Lanczos)
 	imaging.Encode(writer, transformedImg, 0)
 	return nil

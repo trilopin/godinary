@@ -9,13 +9,26 @@ go get github.com/trilopin/godinary
 
 Start server
 ```
-godinary --port=8080
+godinary
+```
+
+
+Docker
+```
+CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main
+docker build -t godinary .
+```
+
+Configuration (via env vars)
+```
+- GODINARY_MAX_REQUEST: number of concurrent external requests (default 20)
+- GODINARY_PORT: http server port (default 3002)
 ```
 
 
 Use it
 ```
-http://localhost:8080/v0.1/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
+http://localhost:3002/v0.1/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
 ```
 
 Parameters:
@@ -26,8 +39,7 @@ Parameters:
 - f: format (jpg, jpeg, png, gif allowed)
 
 TODO:
-- remove julienschmidt/httprouter dependency 
+- remove julienschmidt/httprouter dependency: need to solve weird double slash replacement in default go http mux
 - reduce/optimize resulting images
-- concurrency :)
-- dockerify
+- concurrency: global semaphore included, a semaphore per domain should be great
 - log & better error handling

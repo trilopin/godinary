@@ -1,6 +1,8 @@
 package imagejob
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"image"
 	"io"
@@ -45,6 +47,10 @@ func NewImageJob() *ImageJob {
 func (job *ImageJob) Parse(fetchData string) error {
 	var offset int
 	var err error
+
+	h := sha256.New()
+	h.Write([]byte(fetchData))
+	job.Hash = hex.EncodeToString(h.Sum(nil))
 
 	parts := strings.SplitN(fetchData, "/", 2)
 	if parts[0] != "http:" {

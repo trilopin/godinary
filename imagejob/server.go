@@ -25,7 +25,7 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	img := ImageJob{}
+	img := NewImageJob()
 
 	if err := img.Parse(ps.ByName("info")[1:]); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -33,7 +33,7 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 
 	globalSemaphore <- struct{}{}
-	body, err := Download(&img)
+	body, err := img.Download()
 	<-globalSemaphore
 
 	if err != nil {

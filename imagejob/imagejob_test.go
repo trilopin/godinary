@@ -135,14 +135,14 @@ func TestParseFail(t *testing.T) {
 func TestDownload(t *testing.T) {
 	img := NewImageJob()
 	img.SourceURL = testURL
-	body, err := Download(img)
+	body, err := img.Download()
 	assert.Nil(t, err)
 	assert.NotNil(t, body)
 }
 
 func TestDownloadFailBecauseNoURL(t *testing.T) {
 	img := NewImageJob()
-	body, err := Download(img)
+	body, err := img.Download()
 	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("SourceURL not found in image"))
 }
@@ -150,7 +150,7 @@ func TestDownloadFailBecauseNoURL(t *testing.T) {
 func TestDownloadFailBecauseBadURL(t *testing.T) {
 	img := NewImageJob()
 	img.SourceURL = "fake"
-	body, err := Download(img)
+	body, err := img.Download()
 	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("Cannot download image"))
 }
@@ -158,7 +158,7 @@ func TestDownloadFailBecauseBadURL(t *testing.T) {
 func TestDecodeFail(t *testing.T) {
 	img := NewImageJob()
 	img.SourceURL = "https://github.com"
-	body, _ := Download(img)
+	body, _ := img.Download()
 	err := img.Decode(body)
 	assert.Nil(t, img.Image)
 	assert.NotNil(t, body)
@@ -168,7 +168,7 @@ func TestDecodeFail(t *testing.T) {
 func TestDecode(t *testing.T) {
 	img := NewImageJob()
 	img.SourceURL = testURL
-	body, _ := Download(img)
+	body, _ := img.Download()
 	err := img.Decode(body)
 	assert.Nil(t, err)
 	assert.NotNil(t, body)

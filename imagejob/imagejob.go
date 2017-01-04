@@ -87,7 +87,7 @@ func (img *ImageJob) Parse(fetchData string) error {
 }
 
 // Download retrieves url into io.Reader
-func Download(img *ImageJob) (io.Reader, error) {
+func (img ImageJob) Download() (io.Reader, error) {
 
 	c := &http.Client{
 		Transport: &http.Transport{

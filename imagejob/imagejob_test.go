@@ -28,61 +28,83 @@ var parserCases = []struct {
 	{
 		testURL,
 		ImageJob{
-			SourceURL: testURL,
-			Filters:   map[string]string{"crop": "scale"},
+			Source: Image{
+				URL: testURL,
+			},
+			Filters: map[string]string{"crop": "scale"},
 		},
 		"without filters",
 	},
 	{
 		"w_400/" + testURL,
 		ImageJob{
-			SourceURL:   testURL,
-			Filters:     map[string]string{"crop": "scale"},
-			TargetWidth: 400,
+			Source: Image{
+				URL: testURL,
+			},
+			Target: Image{
+				Width: 400,
+			},
+			Filters: map[string]string{"crop": "scale"},
 		},
 		"with one filter",
 	},
 	{
 		"w_400,c_limit,h_600,f_jpg/" + testURL,
 		ImageJob{
-			SourceURL:    testURL,
-			Filters:      map[string]string{"crop": "limit"},
-			TargetWidth:  400,
-			TargetHeight: 600,
-			TargetFormat: "jpg",
+			Source: Image{
+				URL: testURL,
+			},
+			Target: Image{
+				Width:  400,
+				Height: 600,
+				Format: "jpg",
+			},
+			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter jpg",
 	},
 	{
 		"w_400,c_limit,h_600,f_png/" + testURL,
 		ImageJob{
-			SourceURL:    testURL,
-			Filters:      map[string]string{"crop": "limit"},
-			TargetWidth:  400,
-			TargetHeight: 600,
-			TargetFormat: "png",
+			Source: Image{
+				URL: testURL,
+			},
+			Target: Image{
+				Width:  400,
+				Height: 600,
+				Format: "png",
+			},
+			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter png",
 	},
 	{
 		"w_400,c_limit,h_600,f_gif/" + testURL,
 		ImageJob{
-			SourceURL:    testURL,
-			Filters:      map[string]string{"crop": "limit"},
-			TargetWidth:  400,
-			TargetHeight: 600,
-			TargetFormat: "gif",
+			Source: Image{
+				URL: testURL,
+			},
+			Target: Image{
+				Width:  400,
+				Height: 600,
+				Format: "gif",
+			},
+			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter gif",
 	},
 	{
 		"w_400,c_limit,h_600,f_jpeg/" + testURL,
 		ImageJob{
-			SourceURL:    testURL,
-			Filters:      map[string]string{"crop": "limit"},
-			TargetWidth:  400,
-			TargetHeight: 600,
-			TargetFormat: "jpeg",
+			Source: Image{
+				URL: testURL,
+			},
+			Target: Image{
+				Width:  400,
+				Height: 600,
+				Format: "jpeg",
+			},
+			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter jpeg",
 	},
@@ -90,10 +112,10 @@ var parserCases = []struct {
 
 func TestParse(t *testing.T) {
 	for _, test := range parserCases {
-		img := NewImageJob()
-		err := img.Parse(test.url)
+		job := NewImageJob()
+		err := job.Parse(test.url)
 		assert.Nil(t, err)
-		assert.Equal(t, test.expected, *img, test.description)
+		assert.Equal(t, test.expected, *job, test.description)
 	}
 }
 
@@ -133,48 +155,47 @@ func TestParseFail(t *testing.T) {
 }
 
 func TestDownload(t *testing.T) {
-	img := NewImageJob()
-	img.SourceURL = testURL
-	body, err := img.Download()
+	job := NewImageJob()
+	job.Source.URL = testURL
+	body, err := job.Source.Download()
 	assert.Nil(t, err)
 	assert.NotNil(t, body)
 }
 
 func TestDownloadFailBecauseNoURL(t *testing.T) {
-	img := NewImageJob()
-	body, err := img.Download()
+	job := NewImageJob()
+	body, err := job.Source.Download()
 	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("SourceURL not found in image"))
 }
 
 func TestDownloadFailBecauseBadURL(t *testing.T) {
-	img := NewImageJob()
-	img.SourceURL = "fake"
-	body, err := img.Download()
+	job := NewImageJob()
+	job.Source.URL = "fake"
+	body, err := job.Source.Download()
 	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("Cannot download image"))
 }
 
 func TestDecodeFail(t *testing.T) {
-	img := NewImageJob()
-	img.SourceURL = "https://github.com"
-	body, _ := img.Download()
-	err := img.Decode(body)
-	assert.Nil(t, img.Image)
+	job := NewImageJob()
+	job.Source.URL = "https://github.com"
+	body, _ := job.Source.Download()
+	err := job.Source.Decode(body)
 	assert.NotNil(t, body)
 	assert.Equal(t, err, errors.New("Cannot decode image"))
 }
 
 func TestDecode(t *testing.T) {
-	img := NewImageJob()
-	img.SourceURL = testURL
-	body, _ := img.Download()
-	err := img.Decode(body)
+	job := NewImageJob()
+	job.Source.URL = testURL
+	body, _ := job.Source.Download()
+	err := job.Source.Decode(body)
 	assert.Nil(t, err)
 	assert.NotNil(t, body)
-	assert.NotNil(t, img.Image, "Downloaded image should be not nil")
-	assert.Equal(t, img.SourceHeight, 800)
-	assert.Equal(t, img.SourceWidth, 566)
+	assert.NotNil(t, job.Source.Content, "Downloaded image should be not nil")
+	assert.Equal(t, job.Source.Height, 800)
+	assert.Equal(t, job.Source.Width, 566)
 }
 
 func TestProcess(t *testing.T) {
@@ -184,14 +205,14 @@ func TestProcess(t *testing.T) {
 		img, _ := imaging.Open(test)
 		out, _ := ioutil.TempFile("/tmp/", "godinary")
 
-		image := NewImageJob()
-		image.Image = img
-		image.TargetWidth = 40
-		image.TargetHeight = 60
-		image.TargetFormat = "jpg"
-		image.extractInfo()
+		job := NewImageJob()
+		job.Source.Content = img
+		job.Target.Width = 40
+		job.Target.Height = 60
+		job.Target.Format = "jpg"
+		job.Source.extractInfo()
 
-		err := image.Process(out)
+		err := job.Process(out)
 		assert.Nil(t, err)
 
 		resImg, _ := imaging.Open(out.Name())
@@ -206,15 +227,15 @@ func TestProcessFitHorizontal(t *testing.T) {
 	img, _ := imaging.Open(testFiles["jpg"])
 	out, _ := ioutil.TempFile("/tmp/", "godinary")
 
-	image := NewImageJob()
-	image.Image = img
-	image.TargetWidth = 60
-	image.TargetHeight = 40
-	image.TargetFormat = "jpg"
-	image.Filters["crop"] = "fit"
-	image.extractInfo()
+	job := NewImageJob()
+	job.Source.Content = img
+	job.Target.Width = 60
+	job.Target.Height = 40
+	job.Target.Format = "jpg"
+	job.Filters["crop"] = "fit"
+	job.Source.extractInfo()
 
-	err := image.Process(out)
+	err := job.Process(out)
 	assert.Nil(t, err)
 
 	resImg, _ := imaging.Open(out.Name())
@@ -228,15 +249,15 @@ func TestProcessLimitHorizontal(t *testing.T) {
 	img, _ := imaging.Open(testFiles["jpg"])
 	out, _ := ioutil.TempFile("/tmp/", "godinary")
 
-	image := NewImageJob()
-	image.Image = img
-	image.TargetWidth = 6000
-	image.TargetHeight = 2000
-	image.TargetFormat = "jpg"
-	image.Filters["crop"] = "limit"
-	image.extractInfo()
+	job := NewImageJob()
+	job.Source.Content = img
+	job.Target.Width = 6000
+	job.Target.Height = 2000
+	job.Target.Format = "jpg"
+	job.Filters["crop"] = "limit"
+	job.Source.extractInfo()
 
-	err := image.Process(out)
+	err := job.Process(out)
 	assert.Nil(t, err)
 
 	resImg, _ := imaging.Open(out.Name())
@@ -249,12 +270,12 @@ func TestProcessLimitHorizontal(t *testing.T) {
 func TestProcessFail(t *testing.T) {
 	out, _ := ioutil.TempFile("/tmp/", "godinary")
 
-	image := NewImageJob()
-	image.TargetWidth = 40
-	image.TargetHeight = 60
-	image.TargetFormat = "jpg"
+	job := NewImageJob()
+	job.Target.Width = 40
+	job.Target.Height = 60
+	job.Target.Format = "jpg"
 
-	err := image.Process(out)
-	assert.Nil(t, image.Image)
+	err := job.Process(out)
+	assert.Nil(t, job.Source.Content)
 	assert.Equal(t, err, errors.New("Image not found"))
 }

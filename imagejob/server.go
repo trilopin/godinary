@@ -25,15 +25,15 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	img := NewImageJob()
+	job := NewImageJob()
 
-	if err := img.Parse(ps.ByName("info")[1:]); err != nil {
+	if err := job.Parse(ps.ByName("info")[1:]); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
 	globalSemaphore <- struct{}{}
-	body, err := img.Download()
+	body, err := job.Source.Download()
 	<-globalSemaphore
 
 	if err != nil {
@@ -41,12 +41,12 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		return
 	}
 
-	img.Decode(body)
+	job.Source.Decode(body)
 
-	if err := img.Process(w); err != nil {
+	if err := job.Process(w); err != nil {
 		http.Error(w, "Cannot process Image", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/"+img.TargetFormat)
+	w.Header().Set("Content-Type", "image/"+job.Target.Format)
 }

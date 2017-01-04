@@ -15,17 +15,22 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-// ImageJob stores info for image processing
+// Image contains image attributes
+type Image struct {
+	Width       int
+	Height      int
+	AspectRatio float32
+	Content     image.Image
+	URL         string
+	Format      string
+}
+
+// ImageJob manages image transformation
 type ImageJob struct {
-	Image             image.Image
-	SourceURL         string
-	SourceWidth       int
-	SourceHeight      int
-	SourceAspectRatio float32
-	TargetWidth       int
-	TargetHeight      int
-	TargetFormat      string
-	Filters           map[string]string
+	Source  Image
+	Target  Image
+	Hash    string
+	Filters map[string]string
 }
 
 // NewImageJob constructs a default empty struct and return a pointer to it
@@ -37,7 +42,7 @@ func NewImageJob() *ImageJob {
 }
 
 // Parse creates a Job struct from string
-func (img *ImageJob) Parse(fetchData string) error {
+func (job *ImageJob) Parse(fetchData string) error {
 	var offset int
 	var err error
 
@@ -48,12 +53,12 @@ func (img *ImageJob) Parse(fetchData string) error {
 			filter := strings.Split(v, "_")
 			switch filter[0] {
 			case "h":
-				img.TargetHeight, err = strconv.Atoi(filter[1])
+				job.Target.Height, err = strconv.Atoi(filter[1])
 				if err != nil {
 					return errors.New("TargetHeight is not integer")
 				}
 			case "w":
-				img.TargetWidth, err = strconv.Atoi(filter[1])
+				job.Target.Width, err = strconv.Atoi(filter[1])
 				if err != nil {
 					return errors.New("TargetWidth is not integer")
 				}
@@ -67,7 +72,7 @@ func (img *ImageJob) Parse(fetchData string) error {
 				if !allowed[filter[1]] {
 					return errors.New("Format not allowed")
 				}
-				img.TargetFormat = filter[1]
+				job.Target.Format = filter[1]
 			case "c":
 				allowed := map[string]bool{
 					"limit": true,
@@ -77,17 +82,17 @@ func (img *ImageJob) Parse(fetchData string) error {
 				if !allowed[filter[1]] {
 					return errors.New("Crop not allowed")
 				}
-				img.Filters["crop"] = filter[1]
+				job.Filters["crop"] = filter[1]
 			}
 		}
 		offset = len(parts[0]) + 1
 	}
-	img.SourceURL, _ = url.QueryUnescape(fetchData[offset:])
+	job.Source.URL, _ = url.QueryUnescape(fetchData[offset:])
 	return nil
 }
 
 // Download retrieves url into io.Reader
-func (img ImageJob) Download() (io.Reader, error) {
+func (img Image) Download() (io.Reader, error) {
 
 	c := &http.Client{
 		Transport: &http.Transport{
@@ -101,11 +106,11 @@ func (img ImageJob) Download() (io.Reader, error) {
 		},
 	}
 
-	if img.SourceURL == "" {
+	if img.URL == "" {
 		return nil, errors.New("SourceURL not found in image")
 	}
 
-	resp, err := c.Get(img.SourceURL)
+	resp, err := c.Get(img.URL)
 	if err != nil {
 		return nil, errors.New("Cannot download image")
 	}
@@ -113,44 +118,44 @@ func (img ImageJob) Download() (io.Reader, error) {
 }
 
 // Decode takes body reader and loads image into struct
-func (img *ImageJob) Decode(body io.Reader) error {
+func (img *Image) Decode(body io.Reader) error {
 	image, err := imaging.Decode(body)
 	if err != nil {
 		return errors.New("Cannot decode image")
 	}
-	img.Image = image
+	img.Content = image
 	img.extractInfo()
 	return nil
 }
 
-func (img *ImageJob) extractInfo() error {
-	bounds := img.Image.Bounds()
-	img.SourceHeight = bounds.Max.Y
-	img.SourceWidth = bounds.Max.X
-	img.SourceAspectRatio = float32(img.SourceWidth) / float32(img.SourceHeight)
+func (img *Image) extractInfo() error {
+	bounds := img.Content.Bounds()
+	img.Height = bounds.Max.Y
+	img.Width = bounds.Max.X
+	img.AspectRatio = float32(img.Width) / float32(img.Height)
 	return nil
 }
 
 // crop calculates the best strategy to crop the image
-func (img *ImageJob) crop() error {
-	switch img.Filters["crop"] {
+func (job *ImageJob) crop() error {
+	switch job.Filters["crop"] {
 	// Preserve aspect ratio, bigger dimension is selected
 	case "fit":
-		if img.TargetHeight > img.TargetWidth {
-			img.TargetWidth = 0
+		if job.Target.Height > job.Target.Width {
+			job.Target.Width = 0
 		} else {
-			img.TargetHeight = 0
+			job.Target.Height = 0
 		}
 		// Same as Fit but limiting size to original image
 	case "limit":
-		if img.TargetHeight > img.SourceHeight || img.TargetWidth > img.SourceWidth {
-			img.TargetWidth = img.SourceWidth
-			img.TargetHeight = img.SourceHeight
+		if job.Target.Height > job.Source.Height || job.Target.Width > job.Source.Width {
+			job.Target.Width = job.Source.Width
+			job.Target.Height = job.Source.Height
 		} else {
-			if img.TargetHeight > img.TargetWidth {
-				img.TargetWidth = 0
+			if job.Target.Height > job.Target.Width {
+				job.Target.Width = 0
 			} else {
-				img.TargetHeight = 0
+				job.Target.Height = 0
 			}
 		}
 	}
@@ -159,22 +164,26 @@ func (img *ImageJob) crop() error {
 }
 
 // Process transforms image
-func (img *ImageJob) Process(writer io.Writer) error {
-	if img.Image == nil {
+func (job *ImageJob) Process(writer io.Writer) error {
+	if job.Source.Content == nil {
 		return errors.New("Image not found")
 	}
 	// Tweaks height and width parameters (Resize will launch it)
-	img.crop()
+	job.crop()
 
 	log.Printf(
 		"%s from %dx%d to %dx%d",
-		img.SourceURL,
-		img.SourceWidth,
-		img.SourceHeight,
-		img.TargetWidth,
-		img.TargetHeight,
+		job.Source.URL,
+		job.Source.Width,
+		job.Source.Height,
+		job.Target.Width,
+		job.Target.Height,
 	)
-	transformedImg := imaging.Resize(img.Image, img.TargetWidth, img.TargetHeight, imaging.Lanczos)
+	transformedImg := imaging.Resize(
+		job.Source.Content,
+		job.Target.Width,
+		job.Target.Height,
+		imaging.Lanczos)
 	imaging.Encode(writer, transformedImg, 0)
 	return nil
 }

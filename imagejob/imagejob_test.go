@@ -160,50 +160,6 @@ func TestParseFail(t *testing.T) {
 	}
 }
 
-func TestDownload(t *testing.T) {
-	job := NewImageJob()
-	job.Source.URL = testURL
-	body, err := job.Source.Download()
-	assert.Nil(t, err)
-	assert.NotNil(t, body)
-}
-
-func TestDownloadFailBecauseNoURL(t *testing.T) {
-	job := NewImageJob()
-	body, err := job.Source.Download()
-	assert.Nil(t, body)
-	assert.Equal(t, err, errors.New("SourceURL not found in image"))
-}
-
-func TestDownloadFailBecauseBadURL(t *testing.T) {
-	job := NewImageJob()
-	job.Source.URL = "fake"
-	body, err := job.Source.Download()
-	assert.Nil(t, body)
-	assert.Equal(t, err, errors.New("Cannot download image"))
-}
-
-func TestDecodeFail(t *testing.T) {
-	job := NewImageJob()
-	job.Source.URL = "https://github.com"
-	body, _ := job.Source.Download()
-	err := job.Source.Decode(body)
-	assert.NotNil(t, body)
-	assert.Equal(t, err, errors.New("Cannot decode image"))
-}
-
-func TestDecode(t *testing.T) {
-	job := NewImageJob()
-	job.Source.URL = testURL
-	body, _ := job.Source.Download()
-	err := job.Source.Decode(body)
-	assert.Nil(t, err)
-	assert.NotNil(t, body)
-	assert.NotNil(t, job.Source.Content, "Downloaded image should be not nil")
-	assert.Equal(t, job.Source.Height, 800)
-	assert.Equal(t, job.Source.Width, 566)
-}
-
 func TestProcess(t *testing.T) {
 	log.SetOutput(ioutil.Discard)
 
@@ -254,6 +210,7 @@ func TestProcessFitHorizontal(t *testing.T) {
 func TestProcessLimitHorizontal(t *testing.T) {
 	img, _ := imaging.Open(testFiles["jpg"])
 	out, _ := ioutil.TempFile("/tmp/", "godinary")
+	defer os.Remove(out.Name())
 
 	job := NewImageJob()
 	job.Source.Content = img
@@ -270,7 +227,6 @@ func TestProcessLimitHorizontal(t *testing.T) {
 	bounds := resImg.Bounds()
 	assert.Equal(t, 1262, bounds.Max.X)
 	assert.Equal(t, 733, bounds.Max.Y)
-	os.Remove(out.Name())
 }
 
 func TestProcessFail(t *testing.T) {

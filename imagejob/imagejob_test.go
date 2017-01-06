@@ -241,3 +241,43 @@ func TestProcessFail(t *testing.T) {
 	assert.Nil(t, job.Source.Content)
 	assert.Equal(t, err, errors.New("Image not found"))
 }
+
+var cropCases = []struct {
+	crop           string
+	sourceWidth    int
+	sourceHeight   int
+	targetWidth    int
+	targetHeight   int
+	expectedWidth  int
+	expectedHeight int
+	message        string
+}{
+	{"scale", 1000, 500, 100, 50, 100, 50, "scale hor"},
+	{"scale", 500, 1000, 50, 100, 50, 100, "scale vert"},
+	{"fit", 1000, 500, 100, 50, 100, 0, "fit hor-hor"},
+	{"fit", 500, 1000, 100, 50, 100, 0, "fit ver-ver"},
+	{"fit", 1000, 500, 50, 100, 0, 100, "fit hor-ver"},
+	{"fit", 500, 1000, 50, 100, 0, 100, "fit ver-hor"},
+	{"fit", 50, 100, 500, 1000, 0, 1000, "fit bigger"},
+	{"limit", 50, 100, 500, 1000, 50, 100, "limit bigger"},
+	{"limit", 1000, 500, 100, 50, 100, 0, "limit hor-hor"},
+	{"limit", 500, 1000, 100, 50, 100, 0, "limit ver-ver"},
+	{"limit", 1000, 500, 50, 100, 0, 100, "limit hor-ver"},
+	{"limit", 500, 1000, 50, 100, 0, 100, "limit ver-hor"},
+}
+
+func TestCrop(t *testing.T) {
+	for _, test := range cropCases {
+		job := NewImageJob()
+		job.Source.Width = test.sourceWidth
+		job.Source.Height = test.sourceHeight
+		job.Target.Width = test.targetWidth
+		job.Target.Height = test.targetHeight
+		job.Filters["crop"] = test.crop
+
+		err := job.crop()
+		assert.Nil(t, err)
+		assert.Equal(t, test.expectedHeight, job.Target.Height, test.message)
+		assert.Equal(t, test.expectedWidth, job.Target.Width, test.message)
+	}
+}

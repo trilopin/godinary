@@ -4,8 +4,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-
-	"github.com/julienschmidt/httprouter"
+	"strings"
 )
 
 // globalSemaphore controls concurrent http client requests
@@ -18,16 +17,16 @@ var globalSemaphore = make(chan struct{}, func() int {
 }())
 
 // Fetch takes url + params in url to download iamge from url and apply filters
-func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Fetch(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
 
+	urlInfo := strings.Replace(r.URL.Path, "/v0.1/fetch/", "", 1)
 	job := NewImageJob()
-
-	if err := job.Parse(ps.ByName("info")[1:]); err != nil {
+	if err := job.Parse(urlInfo); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
@@ -43,10 +42,10 @@ func Fetch(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 
 	job.Source.Decode(body)
 
+	w.Header().Set("Content-Type", "image/"+job.Target.Format)
 	if err := job.Process(w); err != nil {
 		http.Error(w, "Cannot process Image", http.StatusInternalServerError)
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/"+job.Target.Format)
 }

@@ -12,38 +12,51 @@ const goodUrl = "/v0.1/fetch/w_500,c_limit/http://upload.wikimedia.org/wikipedia
 const badFilter = "/v0.1/fetch/w_pp,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
 const badURL = "/v0.1/fetch/w_500,c_limit/http://fakedomain.com/wikiped.jpg"
 
+var fetchCases = []struct {
+	url     string
+	method  string
+	status  int
+	message string
+}{
+	{
+		"/v0.1/fetch/w_500,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg",
+		"GET",
+		200,
+		"Regular use",
+	},
+	{
+		"/v0.1/fetch/w_500,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg",
+		"POST",
+		405,
+		"Bad Method POST",
+	},
+	{
+		"/v0.1/fetch/w_500,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg",
+		"PUT",
+		405,
+		"Bad Method PUT",
+	},
+	{
+		"/v0.1/fetch/w_pp,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg",
+		"GET",
+		400,
+		"Wrong filter",
+	},
+	{
+		"/v0.1/fetch/w_500,c_limit/http://upload.com/wikihansson/Césars_2014.jpg",
+		"GET",
+		500,
+		"Non existent URI",
+	},
+}
+
 func TestFetch(t *testing.T) {
-	req, _ := http.NewRequest("GET", goodUrl, nil)
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(Fetch)
-	handler.ServeHTTP(rr, req)
+	for _, test := range fetchCases {
+		req, _ := http.NewRequest(test.method, test.url, nil)
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(Fetch)
+		handler.ServeHTTP(rr, req)
 
-	assert.Equal(t, 200, rr.Code)
-}
-
-func TestBadMethod(t *testing.T) {
-	req, _ := http.NewRequest("POST", goodUrl, nil)
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(Fetch)
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, 405, rr.Code)
-}
-
-func TestBadFilter(t *testing.T) {
-	req, _ := http.NewRequest("GET", badFilter, nil)
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(Fetch)
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, 400, rr.Code)
-}
-
-func TestBadURL(t *testing.T) {
-	req, _ := http.NewRequest("GET", badURL, nil)
-	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(Fetch)
-	handler.ServeHTTP(rr, req)
-
-	assert.Equal(t, 500, rr.Code)
+		assert.Equal(t, test.status, rr.Code)
+	}
 }

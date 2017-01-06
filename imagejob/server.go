@@ -11,12 +11,12 @@ import (
 var globalSemaphore = make(chan struct{}, func() int {
 	maxRequests, err := strconv.Atoi(os.Getenv("GODINARY_MAX_REQUEST"))
 	if maxRequests == 0 || err != nil {
-		return 20
+		maxRequests = 20
 	}
 	return maxRequests
 }())
 
-// Fetch takes url + params in url to download iamge from url and apply filters
+// Fetch takes url + params in url to download image from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != "GET" {

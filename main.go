@@ -22,9 +22,9 @@ func init() {
 
 type Handler struct{}
 
+// ServeHTTP overrides default mux. This replacement is needed in
+// order to avoid doble slash removing in url
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	//	uri := r.URL.Path
-	//	fmt.Fprint(w, uri)
 	return
 }
 

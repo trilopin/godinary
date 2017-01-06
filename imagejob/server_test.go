@@ -8,10 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const goodUrl = "/v0.1/fetch/w_500,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
-const badFilter = "/v0.1/fetch/w_pp,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
-const badURL = "/v0.1/fetch/w_500,c_limit/http://fakedomain.com/wikiped.jpg"
-
 var fetchCases = []struct {
 	url     string
 	method  string
@@ -43,7 +39,7 @@ var fetchCases = []struct {
 		"Wrong filter",
 	},
 	{
-		"/v0.1/fetch/w_500,c_limit/http://upload.com/wikihansson/Césars_2014.jpg",
+		"/v0.1/fetch/w_500,c_limit/",
 		"GET",
 		500,
 		"Non existent URI",
@@ -58,5 +54,8 @@ func TestFetch(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, test.status, rr.Code)
+		if test.status == 200 {
+			assert.NotEqual(t, "", rr.Body.String())
+		}
 	}
 }

@@ -58,6 +58,7 @@ func (img *Image) Decode(body io.Reader) error {
 	return nil
 }
 
+// extractInfo calculates image dimensions and store them
 func (img *Image) extractInfo() error {
 	bounds := img.Content.Bounds()
 	img.Height = bounds.Max.Y

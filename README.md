@@ -7,17 +7,14 @@ Install
 go get github.com/trilopin/godinary
 ```
 
-Start server
-```
-godinary
-```
 
 
-Docker
-```
-CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main
-docker build -t godinary .
-```
+Tooling & Docker
+- make build -> compiles and build docker image
+- make get-deps -> retrieves dependencies
+- make test -> launch tests
+- make run -> start server
+
 
 Configuration (via env vars)
 ```

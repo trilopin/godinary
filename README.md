@@ -35,11 +35,10 @@ Parameters:
 - type fetch -> last param is target URL
 - w: max width
 - h: max height
-- c_limit: preserve height/width ratio
+- c: crop type (scale, fit and limit allowed)
 - f: format (jpg, jpeg, png, gif allowed)
 
 TODO:
-- remove julienschmidt/httprouter dependency: need to solve weird double slash replacement in default go http mux
 - reduce/optimize resulting images
 - concurrency: global semaphore included, a semaphore per domain should be great
 - log & better error handling

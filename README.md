@@ -37,5 +37,4 @@ Parameters:
 
 TODO:
 - reduce/optimize resulting images
-- concurrency: global semaphore included, a semaphore per domain should be great
 - log & better error handling

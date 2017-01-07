@@ -31,6 +31,7 @@ func main() {
 
 	mux = map[string]func(http.ResponseWriter, *http.Request){
 		"/v0.1/fetch/": imagejob.Fetch,
+		"/concurrency": imagejob.Concurrency,
 	}
 
 	fmt.Println("Listening on port", Port)

@@ -36,7 +36,6 @@ Parameters:
 - f: format (jpg, jpeg, png, gif allowed)
 
 TODO:
-- authorization & securization
 - rate limiting
 - quality parameter in URL (fixed to 75 in jpeg)
 - log & better error handling

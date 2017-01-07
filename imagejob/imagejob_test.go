@@ -31,6 +31,9 @@ var parserCases = []struct {
 			Source: Image{
 				URL: testURL,
 			},
+			Target: Image{
+				Format: "jpg",
+			},
 			Hash:    "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			Filters: map[string]string{"crop": "scale"},
 		},
@@ -43,7 +46,8 @@ var parserCases = []struct {
 				URL: testURL,
 			},
 			Target: Image{
-				Width: 400,
+				Width:  400,
+				Format: "jpg",
 			},
 			Hash:    "30e1d866a540d350b083cd5989c65ae0ce7b74b6cd4a9a3bf578868160c19ab5",
 			Filters: map[string]string{"crop": "scale"},

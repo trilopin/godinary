@@ -54,6 +54,7 @@ func TestFetch(t *testing.T) {
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, test.status, rr.Code)
+
 		if test.status == 200 {
 			assert.NotEqual(t, "", rr.Body.String())
 		}

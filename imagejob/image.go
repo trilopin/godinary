@@ -3,6 +3,9 @@ package imagejob
 import (
 	"errors"
 	"image"
+	"image/gif"
+	"image/jpeg"
+	"image/png"
 	"io"
 	"net"
 	"net/http"
@@ -65,4 +68,40 @@ func (img *Image) extractInfo() error {
 	img.Width = bounds.Max.X
 	img.AspectRatio = float32(img.Width) / float32(img.Height)
 	return nil
+}
+
+//
+func Encode(img image.Image, w io.Writer, format string, quality int) error {
+	var err error
+
+	if quality <= 0 || quality > 100 {
+		quality = 75
+	}
+
+	switch format {
+	case "jpg", "jpeg":
+		var rgba *image.RGBA
+		if nrgba, ok := img.(*image.NRGBA); ok {
+			if nrgba.Opaque() {
+				rgba = &image.RGBA{
+					Pix:    nrgba.Pix,
+					Stride: nrgba.Stride,
+					Rect:   nrgba.Rect,
+				}
+			}
+		}
+		if rgba != nil {
+			err = jpeg.Encode(w, rgba, &jpeg.Options{Quality: quality})
+		} else {
+			err = jpeg.Encode(w, img, &jpeg.Options{Quality: quality})
+		}
+
+	case "png":
+		err = png.Encode(w, img)
+	case "gif":
+		err = gif.Encode(w, img, &gif.Options{NumColors: 256})
+	default:
+		err = errors.New("Unsupported format")
+	}
+	return err
 }

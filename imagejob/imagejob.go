@@ -26,6 +26,7 @@ func NewImageJob() *ImageJob {
 	var job ImageJob
 	job.Filters = make(map[string]string)
 	job.Filters["crop"] = "scale"
+	job.Target.Format = "jpg"
 	return &job
 }
 
@@ -132,6 +133,9 @@ func (job *ImageJob) Process(writer io.Writer) error {
 		job.Target.Width,
 		job.Target.Height,
 		imaging.Lanczos)
-	imaging.Encode(writer, transformedImg, 0)
+	err := Encode(transformedImg, writer, job.Target.Format, 75)
+	if err != nil {
+		return err
+	}
 	return nil
 }

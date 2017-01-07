@@ -80,7 +80,7 @@ func (job *ImageJob) Parse(fetchData string) error {
 		}
 		offset = len(parts[0]) + 1
 	}
-	job.Source.URL, err = url.QueryUnescape(fetchData[offset:])
+	job.Source.URL, _ = url.QueryUnescape(fetchData[offset:])
 
 	return nil
 }

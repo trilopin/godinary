@@ -23,10 +23,10 @@ var globalThrotling = make(chan struct{}, func() int {
 
 // Concurrency is a handler for testing concurrency levels
 func Concurrency(w http.ResponseWriter, r *http.Request) {
-	domainThrotle, ok := specificThrotling["patata"]
+	domainThrotle, ok := specificThrotling["fake"]
 	if !ok {
 		domainThrotle = make(chan struct{}, 10)
-		specificThrotling["patata"] = domainThrotle
+		specificThrotling["fake"] = domainThrotle
 	}
 
 	globalThrotling <- struct{}{}

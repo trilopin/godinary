@@ -70,7 +70,8 @@ func (img *Image) extractInfo() error {
 	return nil
 }
 
-//
+// Encode writes image to io.writer in format and quality specified.
+// quality is only used as compression parameter of jpg format
 func Encode(img image.Image, w io.Writer, format string, quality int) error {
 	var err error
 

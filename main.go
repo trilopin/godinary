@@ -5,16 +5,22 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/trilopin/godinary/imagejob"
 )
 
+// Port exposed by http server
 var Port string
 
-func init() {
+// AllowedReferers is the list of hosts allowed to request images
+var AllowedReferers []string
 
+func init() {
 	Port = os.Getenv("GODINARY_PORT")
+	AllowedReferers = strings.Split(os.Getenv("GODINARY_ALLOW_HOSTS"), ",")
+	sort.Strings(AllowedReferers)
 	if Port == "" {
 		Port = "3002"
 	}
@@ -43,6 +49,27 @@ type myHandler struct{}
 // ServeHTTP manage custom url multiplexing avoiding path.clean in
 // default go http mux.
 func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// Manage authorization by htp Referer
+	// List of authorized referers should provisioned via GODINARY_ALLOW_HOSTS
+	// environment variable. Empty referer is always allowed because
+	// development issues
+	var (
+		allowed     bool
+		httpReferer string
+	)
+
+	httpReferer = r.Header.Get("Referer")
+	for _, domain := range AllowedReferers {
+		if domain == httpReferer {
+			allowed = true
+		}
+	}
+
+	if !allowed {
+		http.Error(w, "Referer not allowed", http.StatusForbidden)
+		return
+	}
+	// Manage route is is allowed
 	for key, h := range mux {
 		if strings.Index(r.URL.String(), key) == 0 {
 			h(w, r)

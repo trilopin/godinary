@@ -23,8 +23,8 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-
 	urlInfo := strings.Replace(r.URL.Path, "/v0.1/fetch/", "", 1)
+
 	job := NewImageJob()
 	if err := job.Parse(urlInfo); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)

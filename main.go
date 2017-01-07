@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/trilopin/godinary/imagejob"
 )
@@ -20,17 +21,30 @@ func init() {
 	log.SetOutput(os.Stdout)
 }
 
-type Handler struct{}
-
-// ServeHTTP overrides default mux. This replacement is needed in
-// order to avoid doble slash removing in url
-func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	return
-}
+var mux map[string]func(http.ResponseWriter, *http.Request)
 
 func main() {
-	handler := new(Handler)
-	http.HandleFunc("/v0.1/fetch/", imagejob.Fetch)
+	server := http.Server{
+		Addr:    ":" + Port,
+		Handler: &myHandler{},
+	}
+
+	mux = map[string]func(http.ResponseWriter, *http.Request){
+		"/v0.1/fetch/": imagejob.Fetch,
+	}
+
 	fmt.Println("Listening on port", Port)
-	log.Fatal(http.ListenAndServe(":"+Port, handler))
+	server.ListenAndServe()
+}
+
+type myHandler struct{}
+
+// ServeHTTP manage custom url multiplexing avoiding path.clean in
+// default go http mux.
+func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for key, h := range mux {
+		if strings.Index(r.URL.String(), key) == 0 {
+			h(w, r)
+		}
+	}
 }

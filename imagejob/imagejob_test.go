@@ -118,6 +118,22 @@ var parserCases = []struct {
 		},
 		"with multiple filter jpeg",
 	},
+	{
+		"w_400,c_limit,h_600,f_webp/" + testURL,
+		ImageJob{
+			Source: Image{
+				URL: testURL,
+			},
+			Target: Image{
+				Width:  400,
+				Height: 600,
+				Format: "webp",
+			},
+			Hash:    "a6dc25c56fd579cb024ca3b93614dcdf9f41f85a16d95eb50b82b0e63f8b5dc1",
+			Filters: map[string]string{"crop": "limit"},
+		},
+		"with multiple filter webp",
+	},
 }
 
 func TestParse(t *testing.T) {

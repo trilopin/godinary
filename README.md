@@ -20,6 +20,7 @@ Configuration (via env vars)
 ```
 - GODINARY_MAX_REQUEST: number of concurrent external requests (default 20)
 - GODINARY_PORT: http server port (default 3002)
+- GODINARY_ALLOW_HOSTS: list of referer hostnames allowed (blank is allways allowed)
 ```
 
 

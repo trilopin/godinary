@@ -62,7 +62,6 @@ var EncodeCases = []struct {
 	{"testdata/fiveyears.jpg", "jpeg", 80, nil},
 	{"testdata/fiveyears.jpg", "gif", 80, nil},
 	{"testdata/fiveyears.jpg", "png", 80, nil},
-	{"testdata/fiveyears.jpg", "webp", 80, nil},
 	{"testdata/fiveyears.jpg", "fake", 80, errors.New("Unsupported format")},
 }
 

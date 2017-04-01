@@ -59,7 +59,6 @@ func (job *ImageJob) Parse(fetchData string) error {
 				allowed := map[string]bool{
 					"jpg":  true,
 					"jpeg": true,
-					"webp": true,
 					"png":  true,
 					"gif":  true,
 				}

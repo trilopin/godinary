@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/chai2010/webp"
 	"github.com/disintegration/imaging"
 )
 
@@ -100,8 +99,6 @@ func Encode(img image.Image, w io.Writer, format string, quality int) error {
 
 	case "png":
 		err = png.Encode(w, img)
-	case "webp":
-		err = webp.Encode(w, img, &webp.Options{Lossless: false, Quality: float32(quality)})
 	case "gif":
 		err = gif.Encode(w, img, &gif.Options{NumColors: 256})
 	default:

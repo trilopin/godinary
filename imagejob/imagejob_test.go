@@ -29,12 +29,13 @@ var parserCases = []struct {
 		testURL,
 		ImageJob{
 			Source: Image{
-				URL: testURL,
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			},
 			Target: Image{
 				Format: "jpg",
+				Hash:   "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			},
-			Hash:    "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			Filters: map[string]string{"crop": "scale"},
 		},
 		"without filters",
@@ -43,13 +44,14 @@ var parserCases = []struct {
 		"w_400/" + testURL,
 		ImageJob{
 			Source: Image{
-				URL: testURL,
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			},
 			Target: Image{
 				Width:  400,
 				Format: "jpg",
+				Hash:   "30e1d866a540d350b083cd5989c65ae0ce7b74b6cd4a9a3bf578868160c19ab5",
 			},
-			Hash:    "30e1d866a540d350b083cd5989c65ae0ce7b74b6cd4a9a3bf578868160c19ab5",
 			Filters: map[string]string{"crop": "scale"},
 		},
 		"with one filter",
@@ -58,14 +60,15 @@ var parserCases = []struct {
 		"w_400,c_limit,h_600,f_jpg/" + testURL,
 		ImageJob{
 			Source: Image{
-				URL: testURL,
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			},
 			Target: Image{
 				Width:  400,
 				Height: 600,
 				Format: "jpg",
+				Hash:   "3d5bd40f726f97e8ef21b079953d437204a10f1e42d4066025f87c6c1914f195",
 			},
-			Hash:    "3d5bd40f726f97e8ef21b079953d437204a10f1e42d4066025f87c6c1914f195",
 			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter jpg",
@@ -74,14 +77,15 @@ var parserCases = []struct {
 		"w_400,c_limit,h_600,f_png/" + testURL,
 		ImageJob{
 			Source: Image{
-				URL: testURL,
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			},
 			Target: Image{
 				Width:  400,
 				Height: 600,
 				Format: "png",
+				Hash:   "e976de427ede66ef4c1af9216b59c76b2c030fec0537882dfe507c99d5c542fb",
 			},
-			Hash:    "e976de427ede66ef4c1af9216b59c76b2c030fec0537882dfe507c99d5c542fb",
 			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter png",
@@ -90,14 +94,15 @@ var parserCases = []struct {
 		"w_400,c_limit,h_600,f_gif/" + testURL,
 		ImageJob{
 			Source: Image{
-				URL: testURL,
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			},
 			Target: Image{
 				Width:  400,
 				Height: 600,
 				Format: "gif",
+				Hash:   "25be0d36afcd9cf64e785b5cf52f13c332d1b9c6d544c69a02c6a51cc1c40743",
 			},
-			Hash:    "25be0d36afcd9cf64e785b5cf52f13c332d1b9c6d544c69a02c6a51cc1c40743",
 			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter gif",
@@ -106,14 +111,15 @@ var parserCases = []struct {
 		"w_400,c_limit,h_600,f_jpeg/" + testURL,
 		ImageJob{
 			Source: Image{
-				URL: testURL,
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
 			},
 			Target: Image{
 				Width:  400,
 				Height: 600,
 				Format: "jpeg",
+				Hash:   "7bccb1bc86df66b2e348de55c100634cdf407a815b628b8dab0d8a8ac9519b7f",
 			},
-			Hash:    "7bccb1bc86df66b2e348de55c100634cdf407a815b628b8dab0d8a8ac9519b7f",
 			Filters: map[string]string{"crop": "limit"},
 		},
 		"with multiple filter jpeg",

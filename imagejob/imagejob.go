@@ -17,7 +17,6 @@ import (
 type ImageJob struct {
 	Source  Image
 	Target  Image
-	Hash    string
 	Filters map[string]string
 }
 
@@ -35,9 +34,9 @@ func (job *ImageJob) Parse(fetchData string) error {
 	var offset int
 	var err error
 
-	h := sha256.New()
-	h.Write([]byte(fetchData))
-	job.Hash = hex.EncodeToString(h.Sum(nil))
+	ht := sha256.New()
+	ht.Write([]byte(fetchData))
+	job.Target.Hash = hex.EncodeToString(ht.Sum(nil))
 
 	parts := strings.SplitN(fetchData, "/", 2)
 	if parts[0] != "http:" {
@@ -54,6 +53,11 @@ func (job *ImageJob) Parse(fetchData string) error {
 				job.Target.Width, err = strconv.Atoi(filter[1])
 				if err != nil {
 					return errors.New("TargetWidth is not integer")
+				}
+			case "q":
+				job.Target.Quality, err = strconv.Atoi(filter[1])
+				if err != nil {
+					return errors.New("Quality is not integer")
 				}
 			case "f":
 				allowed := map[string]bool{
@@ -81,6 +85,10 @@ func (job *ImageJob) Parse(fetchData string) error {
 		offset = len(parts[0]) + 1
 	}
 	job.Source.URL, _ = url.QueryUnescape(fetchData[offset:])
+
+	hs := sha256.New()
+	hs.Write([]byte(job.Source.URL))
+	job.Source.Hash = hex.EncodeToString(hs.Sum(nil))
 
 	return nil
 }

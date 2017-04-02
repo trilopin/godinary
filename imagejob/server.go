@@ -3,12 +3,16 @@ package imagejob
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/trilopin/godinary/storage"
 )
 
 // globalSemaphore controls concurrent http client requests
@@ -41,7 +45,7 @@ func Concurrency(w http.ResponseWriter, r *http.Request) {
 
 // Fetch takes url + params in url to download image from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request) {
-
+	var body io.Reader
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -65,15 +69,19 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		specificThrotling[domain] = domainThrotle
 	}
 
-	globalThrotling <- struct{}{}
-	domainThrotle <- struct{}{}
-	body, err := job.Source.Download()
-	<-domainThrotle
-	<-globalThrotling
-
+	body, err = storage.StorageDriver.Read(job.Source.Hash)
 	if err != nil {
-		http.Error(w, "Cannot download image", http.StatusInternalServerError)
-		return
+		log.Println("Downloading")
+		globalThrotling <- struct{}{}
+		domainThrotle <- struct{}{}
+		body, err = job.Source.Download(storage.StorageDriver)
+		<-domainThrotle
+		<-globalThrotling
+
+		if err != nil {
+			http.Error(w, "Cannot download image", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	job.Source.Decode(body)

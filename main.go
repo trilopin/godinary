@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/trilopin/godinary/imagejob"
+	"github.com/trilopin/godinary/storage"
 )
 
 // Port exposed by http server
@@ -20,6 +21,13 @@ var AllowedReferers []string
 func init() {
 	Port = os.Getenv("GODINARY_PORT")
 	AllowedReferers = strings.Split(os.Getenv("GODINARY_ALLOW_HOSTS"), ",")
+
+	if os.Getenv("GODINARY_STORAGE") == "gs" {
+		storage.StorageDriver = storage.NewGoogleStorageDriver()
+	} else {
+		storage.StorageDriver = storage.NewFileDriver()
+	}
+
 	sort.Strings(AllowedReferers)
 	if Port == "" {
 		Port = "3002"

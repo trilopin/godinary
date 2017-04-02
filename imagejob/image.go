@@ -1,31 +1,36 @@
 package imagejob
 
 import (
+	"bytes"
 	"errors"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
 
 	"github.com/disintegration/imaging"
+	"github.com/trilopin/godinary/storage"
 )
 
 // Image contains image attributes
 type Image struct {
 	Width       int
 	Height      int
+	Quality     int
 	AspectRatio float32
 	Content     image.Image
+	Hash        string
 	URL         string
 	Format      string
 }
 
 // Download retrieves url into io.Reader
-func (img Image) Download() (io.Reader, error) {
+func (img Image) Download(sd storage.Driver) (io.Reader, error) {
 
 	c := &http.Client{
 		Transport: &http.Transport{
@@ -46,6 +51,12 @@ func (img Image) Download() (io.Reader, error) {
 	resp, err := c.Get(img.URL)
 	if err != nil {
 		return nil, errors.New("Cannot download image")
+	}
+
+	if sd != nil {
+		body, _ := ioutil.ReadAll(resp.Body)
+		go sd.Write(body, img.Hash)
+		return bytes.NewBuffer(body), nil
 	}
 	return resp.Body, nil
 }

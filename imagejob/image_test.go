@@ -12,28 +12,28 @@ import (
 
 func TestDownload(t *testing.T) {
 	img := Image{URL: testURL}
-	body, err := img.Download()
+	body, err := img.Download(nil)
 	assert.Nil(t, err)
 	assert.NotNil(t, body)
 }
 
 func TestDownloadFailBecauseNoURL(t *testing.T) {
 	img := Image{}
-	body, err := img.Download()
+	body, err := img.Download(nil)
 	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("SourceURL not found in image"))
 }
 
 func TestDownloadFailBecauseBadURL(t *testing.T) {
 	img := Image{URL: "fake"}
-	body, err := img.Download()
+	body, err := img.Download(nil)
 	assert.Nil(t, body)
 	assert.Equal(t, err, errors.New("Cannot download image"))
 }
 
 func TestDecodeFail(t *testing.T) {
 	img := Image{URL: "https://github.com"}
-	body, _ := img.Download()
+	body, _ := img.Download(nil)
 	err := img.Decode(body)
 	assert.NotNil(t, body)
 	assert.Equal(t, err, errors.New("Cannot decode image"))
@@ -41,7 +41,7 @@ func TestDecodeFail(t *testing.T) {
 
 func TestDecode(t *testing.T) {
 	img := Image{URL: testURL}
-	body, _ := img.Download()
+	body, _ := img.Download(nil)
 	err := img.Decode(body)
 	assert.Nil(t, err)
 	assert.NotNil(t, body)

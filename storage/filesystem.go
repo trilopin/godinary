@@ -3,7 +3,6 @@ package storage
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -35,7 +34,6 @@ func (fs *FileDriver) Write(buf []byte, hash string) error {
 
 func (fs *FileDriver) Read(hash string) (io.Reader, error) {
 	_, newHash := makeFoldersFromHash(hash, fs.base, 3)
-	log.Println(newHash)
 	r, err := os.Open(newHash)
 	return r, err
 }

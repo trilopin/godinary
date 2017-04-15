@@ -50,11 +50,12 @@ func Concurrency(w http.ResponseWriter, r *http.Request) {
 func Fetch(w http.ResponseWriter, r *http.Request) {
 	var body io.Reader
 
+	t1 := time.Now()
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	urlInfo := strings.Replace(r.URL.Path, "/v0.1/fetch/", "", 1)
+	urlInfo := strings.Replace(r.URL.Path, "/hundredrooms/image/fetch/", "", 1)
 
 	job := NewImageJob()
 	if err := job.Parse(urlInfo); err != nil {
@@ -75,14 +76,16 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 
 	// derived image is already cached
 	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
-		if cached, err2 := ioutil.ReadAll(body); err2 != nil {
+		if cached, err2 := ioutil.ReadAll(body); err2 == nil {
 			writeImage(w, cached, job.Target.Format)
+			fmt.Println("Cached ", time.Since(t1))
 			return
 		}
 	}
 
 	// Download if does not exists at storage, load otherwise
 	body, err = storage.StorageDriver.Read(job.Source.Hash)
+
 	if err == nil {
 		job.Source.Load(body)
 	} else {
@@ -108,6 +111,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeImage(w, job.Target.RawContent, job.Target.Format)
+	fmt.Println("New ", time.Since(t1))
 }
 
 func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) {

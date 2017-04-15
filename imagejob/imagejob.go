@@ -62,6 +62,7 @@ func (job *ImageJob) Parse(fetchData string) error {
 				case "jpg":
 				case "jpeg":
 					job.Target.Format = bimg.JPEG
+				case "auto": //hack
 				case "webp":
 					job.Target.Format = bimg.WEBP
 				case "png":

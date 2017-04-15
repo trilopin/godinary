@@ -59,11 +59,9 @@ func (job *ImageJob) Parse(fetchData string) error {
 				}
 			case "f":
 				switch filter[1] {
-				case "jpg":
-				case "jpeg":
+				case "jpg", "jpeg":
 					job.Target.Format = bimg.JPEG
-				case "auto": //hack
-				case "webp":
+				case "webp", "auto": //hack
 					job.Target.Format = bimg.WEBP
 				case "png":
 					job.Target.Format = bimg.PNG

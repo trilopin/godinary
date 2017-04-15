@@ -23,7 +23,7 @@ var specificThrotling = make(map[string]chan struct{}, 20)
 var globalThrotling = make(chan struct{}, func() int {
 	maxRequests, err := strconv.Atoi(os.Getenv("GODINARY_MAX_REQUEST"))
 	if maxRequests == 0 || err != nil {
-		maxRequests = 20
+		maxRequests = 100
 	}
 	return maxRequests
 }())
@@ -78,7 +78,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
 		if cached, err2 := ioutil.ReadAll(body); err2 == nil {
 			writeImage(w, cached, job.Target.Format)
-			fmt.Println("Cached ", time.Since(t1))
+			fmt.Println("Cached ", time.Since(t1).Seconds())
 			return
 		}
 	}
@@ -111,7 +111,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeImage(w, job.Target.RawContent, job.Target.Format)
-	fmt.Println("New ", time.Since(t1))
+	fmt.Println("New ", time.Since(t1).Seconds())
 }
 
 func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) {

@@ -23,7 +23,7 @@ func NewImageJob() *ImageJob {
 	var job ImageJob
 	job.Filters = make(map[string]string)
 	job.Filters["crop"] = "scale"
-	job.Target.Format = bimg.WEBP
+	job.Target.Format = bimg.JPEG
 	return &job
 }
 

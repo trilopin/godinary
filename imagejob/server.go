@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	bimg "gopkg.in/h2non/bimg.v1"
+
 	"github.com/trilopin/godinary/storage"
 )
 
@@ -101,7 +103,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Cannot process Image", http.StatusInternalServerError)
 	} else {
 		w.Header().Set("Content-Length", strconv.Itoa(len(job.Target.RawContent)))
-		w.Header().Set("Content-Type", "image/webp")
+		w.Header().Set("Content-Type", fmt.Sprintf("image/%s", bimg.ImageTypes[job.Target.Format]))
 		w.Write(job.Target.RawContent)
 	}
 

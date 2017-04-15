@@ -88,7 +88,7 @@ func (img *Image) Process(source Image, sd storage.Driver) error {
 
 	img.RawContent, err = source.Content.Process(options)
 	if err != nil {
-		errors.New("Can't process image")
+		return errors.New("Can't process image")
 	}
 	go sd.Write(img.RawContent, img.Hash)
 

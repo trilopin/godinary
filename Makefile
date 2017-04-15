@@ -1,4 +1,4 @@
-,
+
 get-deps:
 	go get gopkg.in/h2non/bimg.v1
 	go get github.com/stretchr/testify/assert

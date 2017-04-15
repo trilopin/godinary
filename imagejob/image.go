@@ -63,7 +63,7 @@ func (img *Image) Download(sd storage.Driver) error {
 	return nil
 }
 
-// ExtractInfo stores dimensions
+// ExtractInfo stores dimensions into object
 func (img *Image) ExtractInfo() error {
 	size, err := img.Content.Size()
 	if err != nil {
@@ -75,22 +75,21 @@ func (img *Image) ExtractInfo() error {
 	return nil
 }
 
-// Process transforms image
+// Process resizes and convert image
 func (img *Image) Process(source Image, sd storage.Driver) error {
 	var err error
 	options := bimg.Options{
 		Width:   img.Width,
 		Height:  img.Height,
-		Crop:    true,
 		Quality: img.Quality,
 		Type:    img.Format,
 	}
 
-	img.RawContent, err = source.Content.Process(options)
-	if err != nil {
+	if img.RawContent, err = source.Content.Process(options); err != nil {
 		return errors.New("Can't process image")
 	}
-	go sd.Write(img.RawContent, img.Hash)
-
+	if sd != nil {
+		go sd.Write(img.RawContent, img.Hash)
+	}
 	return nil
 }

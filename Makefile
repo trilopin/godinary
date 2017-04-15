@@ -1,8 +1,7 @@
-
+,
 get-deps:
-	go get github.com/disintegration/imaging
+	go get gopkg.in/h2non/bimg.v1
 	go get github.com/stretchr/testify/assert
-#	go get github.com/chai2010/webp
 
 build:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main

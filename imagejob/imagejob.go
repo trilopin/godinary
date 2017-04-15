@@ -99,20 +99,14 @@ func (job *ImageJob) Parse(fetchData string) error {
 func (job *ImageJob) crop() error {
 
 	// reset dimensions
-	if job.Target.Width == 0 {
-		job.Target.Width = int(float32(job.Target.Height) / job.Source.AspectRatio)
-	}
-	if job.Target.Height == 0 {
-		job.Target.Height = int(float32(job.Target.Width) * job.Source.AspectRatio)
-	}
 
 	switch job.Filters["crop"] {
 	// Preserve aspect ratio, bigger dimension is selected
 	case "fit":
 		if job.Target.Height > job.Target.Width {
-			job.Target.Width = int(float32(job.Target.Height) / job.Source.AspectRatio)
+			job.Target.Width = int(float32(job.Target.Height) * job.Source.AspectRatio)
 		} else {
-			job.Target.Height = int(float32(job.Target.Width) * job.Source.AspectRatio)
+			job.Target.Height = int(float32(job.Target.Width) / job.Source.AspectRatio)
 		}
 		// Same as Fit but limiting size to original image
 	case "limit":
@@ -121,10 +115,17 @@ func (job *ImageJob) crop() error {
 			job.Target.Height = job.Source.Height
 		} else {
 			if job.Target.Height > job.Target.Width {
-				job.Target.Width = int(float32(job.Target.Height) / job.Source.AspectRatio)
+				job.Target.Width = int(float32(job.Target.Height) * job.Source.AspectRatio)
 			} else {
-				job.Target.Height = int(float32(job.Target.Width) * job.Source.AspectRatio)
+				job.Target.Height = int(float32(job.Target.Width) / job.Source.AspectRatio)
 			}
+		}
+	case "scale":
+		if job.Target.Width == 0 {
+			job.Target.Width = job.Target.Height
+		}
+		if job.Target.Height == 0 {
+			job.Target.Height = job.Target.Width
 		}
 	}
 

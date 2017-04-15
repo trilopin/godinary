@@ -49,6 +49,7 @@ func Concurrency(w http.ResponseWriter, r *http.Request) {
 // Fetch takes url + params in url to download image from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request) {
 	var body io.Reader
+
 	if r.Method != "GET" {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -72,11 +73,12 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		specificThrotling[domain] = domainThrotle
 	}
 
-	// cached derived image
-	if r, err := storage.StorageDriver.Read(job.Target.Hash); err == nil {
-		cached, _ := ioutil.ReadAll(r)
-		writeImage(w, cached, job.Target.Format)
-		return
+	// derived image is already cached
+	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
+		if cached, err2 := ioutil.ReadAll(body); err2 != nil {
+			writeImage(w, cached, job.Target.Format)
+			return
+		}
 	}
 
 	// Download if does not exists at storage, load otherwise
@@ -95,23 +97,16 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	// compute original and target dimensions
+
 	job.Source.ExtractInfo()
 	job.crop()
 
-	log.Printf(
-		"%s from %dx%d to %dx%d",
-		job.Source.URL,
-		job.Source.Width,
-		job.Source.Height,
-		job.Target.Width,
-		job.Target.Height,
-	)
-
+	// do the process thing
 	if err := job.Target.Process(job.Source, storage.StorageDriver); err != nil {
 		log.Println(err)
 		http.Error(w, "Cannot process Image", http.StatusInternalServerError)
 	}
+
 	writeImage(w, job.Target.RawContent, job.Target.Format)
 }
 

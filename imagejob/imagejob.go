@@ -4,13 +4,11 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"io"
-	"log"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/disintegration/imaging"
+	bimg "gopkg.in/h2non/bimg.v1"
 )
 
 // ImageJob manages image transformation
@@ -25,7 +23,7 @@ func NewImageJob() *ImageJob {
 	var job ImageJob
 	job.Filters = make(map[string]string)
 	job.Filters["crop"] = "scale"
-	job.Target.Format = "jpg"
+	job.Target.Format = bimg.WEBP
 	return &job
 }
 
@@ -69,7 +67,7 @@ func (job *ImageJob) Parse(fetchData string) error {
 				if !allowed[filter[1]] {
 					return errors.New("Format not allowed")
 				}
-				job.Target.Format = filter[1]
+				job.Target.Format = bimg.WEBP
 			case "c":
 				allowed := map[string]bool{
 					"limit": true,
@@ -95,13 +93,22 @@ func (job *ImageJob) Parse(fetchData string) error {
 
 // crop calculates the best strategy to crop the image
 func (job *ImageJob) crop() error {
+
+	// reset dimensions
+	if job.Target.Width == 0 {
+		job.Target.Width = int(float32(job.Target.Height) / job.Source.AspectRatio)
+	}
+	if job.Target.Height == 0 {
+		job.Target.Height = int(float32(job.Target.Width) * job.Source.AspectRatio)
+	}
+
 	switch job.Filters["crop"] {
 	// Preserve aspect ratio, bigger dimension is selected
 	case "fit":
 		if job.Target.Height > job.Target.Width {
-			job.Target.Width = 0
+			job.Target.Width = int(float32(job.Target.Height) / job.Source.AspectRatio)
 		} else {
-			job.Target.Height = 0
+			job.Target.Height = int(float32(job.Target.Width) * job.Source.AspectRatio)
 		}
 		// Same as Fit but limiting size to original image
 	case "limit":
@@ -110,40 +117,12 @@ func (job *ImageJob) crop() error {
 			job.Target.Height = job.Source.Height
 		} else {
 			if job.Target.Height > job.Target.Width {
-				job.Target.Width = 0
+				job.Target.Width = int(float32(job.Target.Height) / job.Source.AspectRatio)
 			} else {
-				job.Target.Height = 0
+				job.Target.Height = int(float32(job.Target.Width) * job.Source.AspectRatio)
 			}
 		}
 	}
 
-	return nil
-}
-
-// Process transforms image
-func (job *ImageJob) Process(writer io.Writer) error {
-	if job.Source.Content == nil {
-		return errors.New("Image not found")
-	}
-	// Tweaks height and width parameters (Resize will launch it)
-	job.crop()
-
-	log.Printf(
-		"%s from %dx%d to %dx%d",
-		job.Source.URL,
-		job.Source.Width,
-		job.Source.Height,
-		job.Target.Width,
-		job.Target.Height,
-	)
-	transformedImg := imaging.Resize(
-		job.Source.Content,
-		job.Target.Width,
-		job.Target.Height,
-		imaging.Lanczos)
-	err := Encode(transformedImg, writer, job.Target.Format, 75)
-	if err != nil {
-		return err
-	}
 	return nil
 }

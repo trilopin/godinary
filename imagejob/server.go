@@ -74,7 +74,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		log.Println("Downloading")
 		globalThrotling <- struct{}{}
 		domainThrotle <- struct{}{}
-		body, err = job.Source.Download(storage.StorageDriver)
+		err = job.Source.Download(storage.StorageDriver)
 		<-domainThrotle
 		<-globalThrotling
 
@@ -82,14 +82,27 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Cannot download image", http.StatusInternalServerError)
 			return
 		}
+	} else {
+		job.Source.Load(body)
 	}
+	job.Source.ExtractInfo()
+	job.crop()
+	log.Printf(
+		"%s from %dx%d to %dx%d",
+		job.Source.URL,
+		job.Source.Width,
+		job.Source.Height,
+		job.Target.Width,
+		job.Target.Height,
+	)
 
-	job.Source.Decode(body)
-
-	w.Header().Set("Content-Type", "image/"+job.Target.Format)
-	if err := job.Process(w); err != nil {
+	if err := job.Target.Process(job.Source, storage.StorageDriver); err != nil {
+		log.Println(err)
 		http.Error(w, "Cannot process Image", http.StatusInternalServerError)
-		return
+	} else {
+		w.Header().Set("Content-Length", strconv.Itoa(len(job.Target.RawContent)))
+		w.Header().Set("Content-Type", "image/webp")
+		w.Write(job.Target.RawContent)
 	}
 
 }

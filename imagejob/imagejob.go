@@ -58,16 +58,20 @@ func (job *ImageJob) Parse(fetchData string) error {
 					return errors.New("Quality is not integer")
 				}
 			case "f":
-				allowed := map[string]bool{
-					"jpg":  true,
-					"jpeg": true,
-					"png":  true,
-					"gif":  true,
-				}
-				if !allowed[filter[1]] {
+				switch filter[1] {
+				case "jpg":
+				case "jpeg":
+					job.Target.Format = bimg.JPEG
+				case "webp":
+					job.Target.Format = bimg.WEBP
+				case "png":
+					job.Target.Format = bimg.PNG
+				case "gif":
+					job.Target.Format = bimg.GIF
+				default:
 					return errors.New("Format not allowed")
 				}
-				job.Target.Format = bimg.WEBP
+
 			case "c":
 				allowed := map[string]bool{
 					"limit": true,

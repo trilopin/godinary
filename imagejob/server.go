@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -71,9 +72,18 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		specificThrotling[domain] = domainThrotle
 	}
 
+	// cached derived image
+	if r, err := storage.StorageDriver.Read(job.Target.Hash); err == nil {
+		cached, _ := ioutil.ReadAll(r)
+		writeImage(w, cached, job.Target.Format)
+		return
+	}
+
+	// Download if does not exists at storage, load otherwise
 	body, err = storage.StorageDriver.Read(job.Source.Hash)
-	if err != nil {
-		log.Println("Downloading")
+	if err == nil {
+		job.Source.Load(body)
+	} else {
 		globalThrotling <- struct{}{}
 		domainThrotle <- struct{}{}
 		err = job.Source.Download(storage.StorageDriver)
@@ -84,11 +94,11 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Cannot download image", http.StatusInternalServerError)
 			return
 		}
-	} else {
-		job.Source.Load(body)
 	}
+	// compute original and target dimensions
 	job.Source.ExtractInfo()
 	job.crop()
+
 	log.Printf(
 		"%s from %dx%d to %dx%d",
 		job.Source.URL,
@@ -101,12 +111,14 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	if err := job.Target.Process(job.Source, storage.StorageDriver); err != nil {
 		log.Println(err)
 		http.Error(w, "Cannot process Image", http.StatusInternalServerError)
-	} else {
-		w.Header().Set("Content-Length", strconv.Itoa(len(job.Target.RawContent)))
-		w.Header().Set("Content-Type", fmt.Sprintf("image/%s", bimg.ImageTypes[job.Target.Format]))
-		w.Write(job.Target.RawContent)
 	}
+	writeImage(w, job.Target.RawContent, job.Target.Format)
+}
 
+func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) {
+	w.Header().Set("Content-Length", strconv.Itoa(len(buffer)))
+	w.Header().Set("Content-Type", fmt.Sprintf("image/%s", bimg.ImageTypes[format]))
+	w.Write(buffer)
 }
 
 func topDomain(URL string) (string, error) {

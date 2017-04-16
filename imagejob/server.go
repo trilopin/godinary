@@ -28,24 +28,6 @@ var (
 	GlobalThrotling chan struct{}
 )
 
-// Concurrency is a handler for testing concurrency levels
-func Concurrency(w http.ResponseWriter, r *http.Request) {
-	domainThrotle, ok := SpecificThrotling["fake"]
-	if !ok {
-		domainThrotle = make(chan struct{}, 10)
-		SpecificThrotling["fake"] = domainThrotle
-	}
-
-	GlobalThrotling <- struct{}{}
-	fmt.Println("global acquired")
-	domainThrotle <- struct{}{}
-	fmt.Println("domain acquired")
-	time.Sleep(time.Millisecond * 100)
-	<-domainThrotle
-	<-GlobalThrotling
-	fmt.Println("finished")
-}
-
 // Fetch takes url + params in url to download image from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request) {
 	var body io.Reader

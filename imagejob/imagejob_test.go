@@ -72,6 +72,42 @@ var parserCases = []struct {
 		"with multiple filter jpg",
 	},
 	{
+		"w_400,c_limit,h_600,f_webp,q_50/" + testURL,
+		ImageJob{
+			Source: Image{
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
+			},
+			Target: Image{
+				Width:   400,
+				Height:  600,
+				Quality: 50,
+				Format:  bimg.WEBP,
+				Hash:    "e03aa68f05f0aef45860d96878e64facbbc6b48f2f04c22ce44fff3021daa5bb",
+			},
+			Filters: map[string]string{"crop": "limit"},
+		},
+		"with multiple filter webp",
+	},
+	{
+		"w_400,c_limit,h_600,f_auto,q_65/" + testURL,
+		ImageJob{
+			Source: Image{
+				URL:  testURL,
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
+			},
+			Target: Image{
+				Width:   400,
+				Height:  600,
+				Quality: 65,
+				Format:  bimg.JPEG,
+				Hash:    "ccc39c9c087b451f95a41c12f2f67ace0c4a337d74dfcc0d28faed8336ff4df8",
+			},
+			Filters: map[string]string{"crop": "limit"},
+		},
+		"with multiple filter auto jpeg",
+	},
+	{
 		"w_400,c_limit,h_600,f_png/" + testURL,
 		ImageJob{
 			Source: Image{
@@ -158,6 +194,11 @@ var parserErrorCases = []struct {
 		errors.New("Crop not allowed"),
 		"Crop is not allowed",
 	},
+	{
+		"w_100,c_limit,h_500,q_fake/" + testURL,
+		errors.New("Quality is not integer"),
+		"Quality is not an integer",
+	},
 }
 
 func TestParseFail(t *testing.T) {
@@ -168,90 +209,6 @@ func TestParseFail(t *testing.T) {
 	}
 }
 
-//
-// func TestProcess(t *testing.T) {
-// 	log.SetOutput(ioutil.Discard)
-//
-// 	for _, test := range testFiles {
-// 		img, _ := imaging.Open(test)
-// 		out, _ := ioutil.TempFile("/tmp/", "godinary")
-//
-// 		job := NewImageJob()
-// 		job.Source.Content = img
-// 		job.Target.Width = 40
-// 		job.Target.Height = 60
-// 		job.Target.Format = "jpg"
-// 		job.Source.extractInfo()
-//
-// 		err := job.Process(out)
-// 		assert.Nil(t, err)
-//
-// 		resImg, _ := imaging.Open(out.Name())
-// 		bounds := resImg.Bounds()
-// 		assert.Equal(t, bounds.Max.Y, 60)
-// 		assert.Equal(t, bounds.Max.X, 40)
-// 		os.Remove(out.Name())
-// 	}
-// }
-
-// func TestProcessFitHorizontal(t *testing.T) {
-// 	buffer, _ := bimg.Read(testFiles["jpg"])
-// 	img := bimg.NewImage(buffer)
-// 	out, _ := ioutil.TempFile("/tmp/", "godinary")
-//
-// 	job := NewImageJob()
-// 	job.Source.Content = img
-// 	job.Target.Width = 60
-// 	job.Target.Height = 40
-// 	job.Target.Format = bimg.JPEG
-// 	job.Filters["crop"] = "fit"
-// 	job.Source.ExtractInfo()
-//
-// 	err := job.Process(out)
-// 	assert.Nil(t, err)
-//
-// 	resImg, _ := imaging.Open(out.Name())
-// 	bounds := resImg.Bounds()
-// 	assert.Equal(t, 60, bounds.Max.X)
-// 	assert.Equal(t, 35, bounds.Max.Y)
-// 	os.Remove(out.Name())
-// }
-//
-// func TestProcessLimitHorizontal(t *testing.T) {
-// 	img, _ := imaging.Open(testFiles["jpg"])
-// 	out, _ := ioutil.TempFile("/tmp/", "godinary")
-// 	defer os.Remove(out.Name())
-//
-// 	job := NewImageJob()
-// 	job.Source.Content = img
-// 	job.Target.Width = 6000
-// 	job.Target.Height = 2000
-// 	job.Target.Format = "jpg"
-// 	job.Filters["crop"] = "limit"
-// 	job.Source.extractInfo()
-//
-// 	err := job.Process(out)
-// 	assert.Nil(t, err)
-//
-// 	resImg, _ := imaging.Open(out.Name())
-// 	bounds := resImg.Bounds()
-// 	assert.Equal(t, 1262, bounds.Max.X)
-// 	assert.Equal(t, 733, bounds.Max.Y)
-// }
-//
-// func TestProcessFail(t *testing.T) {
-// 	out, _ := ioutil.TempFile("/tmp/", "godinary")
-//
-// 	job := NewImageJob()
-// 	job.Target.Width = 40
-// 	job.Target.Height = 60
-// 	job.Target.Format = "jpg"
-//
-// 	err := job.Process(out)
-// 	assert.Nil(t, job.Source.Content)
-// 	assert.Equal(t, err, errors.New("Image not found"))
-// }
-//
 var cropCases = []struct {
 	crop           string
 	sourceWidth    int

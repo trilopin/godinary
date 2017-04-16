@@ -19,14 +19,14 @@ func TestNewFileDriver(t *testing.T) {
 // TODO: replace this fixed jpeso route
 func TestWrite(t *testing.T) {
 	buf := []byte("CONTENT")
-	os.Setenv("GODINARY_FS_BASE", "/Users/jpeso/.godtmp/")
+	os.Setenv("GODINARY_FS_BASE", "/tmp/.godtmp/")
 	fw := NewFileDriver()
 	err := fw.Write(buf, "aabbccddee")
 	assert.Nil(t, err)
 
-	buf, err = ioutil.ReadFile("/Users/jpeso//.godtmp/aa/bb/cc/aabbccddee")
+	buf, err = ioutil.ReadFile("/tmp/.godtmp/aa/bb/cc/aabbccddee")
 	assert.Nil(t, err)
 	assert.Equal(t, "CONTENT", string(buf))
-	os.RemoveAll("/Users/jpeso/tmp/")
+	os.RemoveAll("/tmp/.godtmp/")
 
 }

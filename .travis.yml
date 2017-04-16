@@ -4,5 +4,8 @@ go:
   - 1.6
   - 1.7
   - master
-install: make get-deps
+
+install: 
+  - curl -s https://raw.githubusercontent.com/h2non/bimg/master/preinstall.sh | sudo bash -
+  - make get-deps
 script: make test

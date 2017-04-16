@@ -1,20 +1,15 @@
 package imagejob
 
 import (
-	"bytes"
 	"errors"
-	"image"
-	"image/gif"
-	"image/jpeg"
-	"image/png"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"time"
 
-	"github.com/disintegration/imaging"
 	"github.com/trilopin/godinary/storage"
+	bimg "gopkg.in/h2non/bimg.v1"
 )
 
 // Image contains image attributes
@@ -23,14 +18,21 @@ type Image struct {
 	Height      int
 	Quality     int
 	AspectRatio float32
-	Content     image.Image
+	Content     *bimg.Image
+	RawContent  []byte
 	Hash        string
 	URL         string
-	Format      string
+	Format      bimg.ImageType
+}
+
+// Load charges content from bytestring
+func (img *Image) Load(r io.Reader) {
+	body, _ := ioutil.ReadAll(r)
+	img.Content = bimg.NewImage(body)
 }
 
 // Download retrieves url into io.Reader
-func (img Image) Download(sd storage.Driver) (io.Reader, error) {
+func (img *Image) Download(sd storage.Driver) error {
 
 	c := &http.Client{
 		Transport: &http.Transport{
@@ -45,75 +47,49 @@ func (img Image) Download(sd storage.Driver) (io.Reader, error) {
 	}
 
 	if img.URL == "" {
-		return nil, errors.New("SourceURL not found in image")
+		return errors.New("SourceURL not found in image")
 	}
 
 	resp, err := c.Get(img.URL)
 	if err != nil {
-		return nil, errors.New("Cannot download image")
+		return errors.New("Cannot download image")
 	}
 
 	if sd != nil {
 		body, _ := ioutil.ReadAll(resp.Body)
+		img.Content = bimg.NewImage(body)
 		go sd.Write(body, img.Hash)
-		return bytes.NewBuffer(body), nil
 	}
-	return resp.Body, nil
-}
-
-// Decode takes body reader and loads image into struct
-func (img *Image) Decode(body io.Reader) error {
-	image, err := imaging.Decode(body)
-	if err != nil {
-		return errors.New("Cannot decode image")
-	}
-	img.Content = image
-	img.extractInfo()
 	return nil
 }
 
-// extractInfo calculates image dimensions and store them
-func (img *Image) extractInfo() error {
-	bounds := img.Content.Bounds()
-	img.Height = bounds.Max.Y
-	img.Width = bounds.Max.X
+// ExtractInfo stores dimensions into object
+func (img *Image) ExtractInfo() error {
+	size, err := img.Content.Size()
+	if err != nil {
+		return errors.New("Can't extract dimensions")
+	}
+	img.Height = size.Height
+	img.Width = size.Width
 	img.AspectRatio = float32(img.Width) / float32(img.Height)
 	return nil
 }
 
-// Encode writes image to io.writer in format and quality specified.
-// quality is only used as compression parameter of jpg format
-func Encode(img image.Image, w io.Writer, format string, quality int) error {
+// Process resizes and convert image
+func (img *Image) Process(source Image, sd storage.Driver) error {
 	var err error
-
-	if quality <= 0 || quality > 100 {
-		quality = 75
+	options := bimg.Options{
+		Width:   img.Width,
+		Height:  img.Height,
+		Quality: img.Quality,
+		Type:    img.Format,
 	}
 
-	switch format {
-	case "jpg", "jpeg":
-		var rgba *image.RGBA
-		if nrgba, ok := img.(*image.NRGBA); ok {
-			if nrgba.Opaque() {
-				rgba = &image.RGBA{
-					Pix:    nrgba.Pix,
-					Stride: nrgba.Stride,
-					Rect:   nrgba.Rect,
-				}
-			}
-		}
-		if rgba != nil {
-			err = jpeg.Encode(w, rgba, &jpeg.Options{Quality: quality})
-		} else {
-			err = jpeg.Encode(w, img, &jpeg.Options{Quality: quality})
-		}
-
-	case "png":
-		err = png.Encode(w, img)
-	case "gif":
-		err = gif.Encode(w, img, &gif.Options{NumColors: 256})
-	default:
-		err = errors.New("Unsupported format")
+	if img.RawContent, err = source.Content.Process(options); err != nil {
+		return errors.New("Can't process image")
 	}
-	return err
+	if sd != nil {
+		go sd.Write(img.RawContent, img.Hash)
+	}
+	return nil
 }

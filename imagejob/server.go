@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	bimg "gopkg.in/h2non/bimg.v1"
-
 	"github.com/trilopin/godinary/storage"
+
+	bimg "gopkg.in/h2non/bimg.v1"
 )
 
 var (
@@ -48,7 +48,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	domain, err := topDomain(job.Source.URL)
-	if err != nil {
+	if err != nil || domain == "" {
 		http.Error(w, "Cannot parse hostname", http.StatusInternalServerError)
 		return
 	}

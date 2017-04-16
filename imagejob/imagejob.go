@@ -13,9 +13,10 @@ import (
 
 // ImageJob manages image transformation
 type ImageJob struct {
-	Source  Image
-	Target  Image
-	Filters map[string]string
+	Source     Image
+	Target     Image
+	Filters    map[string]string
+	AcceptWebp bool
 }
 
 // NewImageJob constructs a default empty struct and return a pointer to it
@@ -61,8 +62,14 @@ func (job *ImageJob) Parse(fetchData string) error {
 				switch filter[1] {
 				case "jpg", "jpeg":
 					job.Target.Format = bimg.JPEG
-				case "webp", "auto": //hack
+				case "webp":
 					job.Target.Format = bimg.WEBP
+				case "auto":
+					if job.AcceptWebp {
+						job.Target.Format = bimg.WEBP
+					} else {
+						job.Target.Format = bimg.JPEG
+					}
 				case "png":
 					job.Target.Format = bimg.PNG
 				case "gif":

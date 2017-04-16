@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/trilopin/godinary/imagejob"
+	"github.com/trilopin/godinary/storage"
 )
 
 // Port exposed by http server
@@ -20,6 +22,26 @@ var AllowedReferers []string
 func init() {
 	Port = os.Getenv("GODINARY_PORT")
 	AllowedReferers = strings.Split(os.Getenv("GODINARY_ALLOW_HOSTS"), ",")
+
+	if os.Getenv("GODINARY_STORAGE") == "gs" {
+		storage.StorageDriver = storage.NewGoogleStorageDriver()
+	} else {
+		storage.StorageDriver = storage.NewFileDriver()
+	}
+
+	imagejob.MaxRequest, _ = strconv.Atoi(os.Getenv("GODINARY_MAX_REQUEST"))
+	if imagejob.MaxRequest == 0 {
+		imagejob.MaxRequest = 100
+	}
+	imagejob.MaxRequestPerDomain, _ = strconv.Atoi(os.Getenv("GODINARY_MAX_REQUEST_DOMAIN"))
+	if imagejob.MaxRequestPerDomain == 0 {
+		imagejob.MaxRequestPerDomain = 10
+	}
+
+	// globalSemaphore controls concurrent http client requests
+	imagejob.SpecificThrotling = make(map[string]chan struct{}, 20)
+	imagejob.GlobalThrotling = make(chan struct{}, imagejob.MaxRequest)
+
 	sort.Strings(AllowedReferers)
 	if Port == "" {
 		Port = "3002"
@@ -36,8 +58,7 @@ func main() {
 	}
 
 	mux = map[string]func(http.ResponseWriter, *http.Request){
-		"/v0.1/fetch/": imagejob.Fetch,
-		"/concurrency": imagejob.Concurrency,
+		"/image/fetch/": imagejob.Fetch,
 	}
 
 	fmt.Println("Listening on port", Port)

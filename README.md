@@ -26,7 +26,7 @@ Configuration (via env vars)
 
 Use it
 ```
-http://localhost:3002/v0.1/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
+http://localhost:3002/image/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
 ```
 
 Parameters:
@@ -34,9 +34,9 @@ Parameters:
 - w: max width
 - h: max height
 - c: crop type (scale, fit and limit allowed)
-- f: format (jpg, jpeg, png, gif allowed)
+- f: format (jpg, jpeg, png, gif, webp and auto allowed)
+- q: quality (75 by default)
 
 TODO:
 - rate limiting
-- quality parameter in URL (fixed to 75 in jpeg)
 - log & better error handling

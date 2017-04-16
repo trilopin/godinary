@@ -4,21 +4,19 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"io"
-	"log"
 	"net/url"
 	"strconv"
 	"strings"
 
-	"github.com/disintegration/imaging"
+	bimg "gopkg.in/h2non/bimg.v1"
 )
 
 // ImageJob manages image transformation
 type ImageJob struct {
-	Source  Image
-	Target  Image
-	Hash    string
-	Filters map[string]string
+	Source     Image
+	Target     Image
+	Filters    map[string]string
+	AcceptWebp bool
 }
 
 // NewImageJob constructs a default empty struct and return a pointer to it
@@ -26,7 +24,7 @@ func NewImageJob() *ImageJob {
 	var job ImageJob
 	job.Filters = make(map[string]string)
 	job.Filters["crop"] = "scale"
-	job.Target.Format = "jpg"
+	job.Target.Format = bimg.JPEG
 	return &job
 }
 
@@ -35,9 +33,9 @@ func (job *ImageJob) Parse(fetchData string) error {
 	var offset int
 	var err error
 
-	h := sha256.New()
-	h.Write([]byte(fetchData))
-	job.Hash = hex.EncodeToString(h.Sum(nil))
+	ht := sha256.New()
+	ht.Write([]byte(fetchData))
+	job.Target.Hash = hex.EncodeToString(ht.Sum(nil))
 
 	parts := strings.SplitN(fetchData, "/", 2)
 	if parts[0] != "http:" {
@@ -55,17 +53,31 @@ func (job *ImageJob) Parse(fetchData string) error {
 				if err != nil {
 					return errors.New("TargetWidth is not integer")
 				}
-			case "f":
-				allowed := map[string]bool{
-					"jpg":  true,
-					"jpeg": true,
-					"png":  true,
-					"gif":  true,
+			case "q":
+				job.Target.Quality, err = strconv.Atoi(filter[1])
+				if err != nil {
+					return errors.New("Quality is not integer")
 				}
-				if !allowed[filter[1]] {
+			case "f":
+				switch filter[1] {
+				case "jpg", "jpeg":
+					job.Target.Format = bimg.JPEG
+				case "webp":
+					job.Target.Format = bimg.WEBP
+				case "auto":
+					if job.AcceptWebp {
+						job.Target.Format = bimg.WEBP
+					} else {
+						job.Target.Format = bimg.JPEG
+					}
+				case "png":
+					job.Target.Format = bimg.PNG
+				case "gif":
+					job.Target.Format = bimg.GIF
+				default:
 					return errors.New("Format not allowed")
 				}
-				job.Target.Format = filter[1]
+
 			case "c":
 				allowed := map[string]bool{
 					"limit": true,
@@ -82,18 +94,25 @@ func (job *ImageJob) Parse(fetchData string) error {
 	}
 	job.Source.URL, _ = url.QueryUnescape(fetchData[offset:])
 
+	hs := sha256.New()
+	hs.Write([]byte(job.Source.URL))
+	job.Source.Hash = hex.EncodeToString(hs.Sum(nil))
+
 	return nil
 }
 
 // crop calculates the best strategy to crop the image
 func (job *ImageJob) crop() error {
+
+	// reset dimensions
+
 	switch job.Filters["crop"] {
 	// Preserve aspect ratio, bigger dimension is selected
 	case "fit":
 		if job.Target.Height > job.Target.Width {
-			job.Target.Width = 0
+			job.Target.Width = int(float32(job.Target.Height) * job.Source.AspectRatio)
 		} else {
-			job.Target.Height = 0
+			job.Target.Height = int(float32(job.Target.Width) / job.Source.AspectRatio)
 		}
 		// Same as Fit but limiting size to original image
 	case "limit":
@@ -102,40 +121,19 @@ func (job *ImageJob) crop() error {
 			job.Target.Height = job.Source.Height
 		} else {
 			if job.Target.Height > job.Target.Width {
-				job.Target.Width = 0
+				job.Target.Width = int(float32(job.Target.Height) * job.Source.AspectRatio)
 			} else {
-				job.Target.Height = 0
+				job.Target.Height = int(float32(job.Target.Width) / job.Source.AspectRatio)
 			}
+		}
+	case "scale":
+		if job.Target.Width == 0 {
+			job.Target.Width = job.Target.Height
+		}
+		if job.Target.Height == 0 {
+			job.Target.Height = job.Target.Width
 		}
 	}
 
-	return nil
-}
-
-// Process transforms image
-func (job *ImageJob) Process(writer io.Writer) error {
-	if job.Source.Content == nil {
-		return errors.New("Image not found")
-	}
-	// Tweaks height and width parameters (Resize will launch it)
-	job.crop()
-
-	log.Printf(
-		"%s from %dx%d to %dx%d",
-		job.Source.URL,
-		job.Source.Width,
-		job.Source.Height,
-		job.Target.Width,
-		job.Target.Height,
-	)
-	transformedImg := imaging.Resize(
-		job.Source.Content,
-		job.Target.Width,
-		job.Target.Height,
-		imaging.Lanczos)
-	err := Encode(transformedImg, writer, job.Target.Format, 75)
-	if err != nil {
-		return err
-	}
 	return nil
 }

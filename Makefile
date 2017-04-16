@@ -1,8 +1,8 @@
 
 get-deps:
-	go get github.com/disintegration/imaging
+	go get gopkg.in/h2non/bimg.v1
+	go get cloud.google.com/go/storage
 	go get github.com/stretchr/testify/assert
-#	go get github.com/chai2010/webp
 
 build:
 	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main
@@ -10,6 +10,11 @@ build:
 
 test:
 	cd imagejob && go test -v .
+	cd storage && go test -v .
 
 run:
-	docker run -p 3002:3002 -ti godinary
+	docker run -p 3002:3002 --env-file .env -ti godinary
+
+local:
+	go build -a -v -o main
+	GODINARY_FS_BASE=/Users/jpeso/godinary_data/ ./main

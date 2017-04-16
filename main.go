@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"strconv"
@@ -21,6 +22,10 @@ var AllowedReferers []string
 
 func init() {
 	Port = os.Getenv("GODINARY_PORT")
+	if Port == "" {
+		Port = "3002"
+	}
+
 	AllowedReferers = strings.Split(os.Getenv("GODINARY_ALLOW_HOSTS"), ",")
 
 	if os.Getenv("GODINARY_STORAGE") == "gs" {
@@ -43,9 +48,6 @@ func init() {
 	imagejob.GlobalThrotling = make(chan struct{}, imagejob.MaxRequest)
 
 	sort.Strings(AllowedReferers)
-	if Port == "" {
-		Port = "3002"
-	}
 	log.SetOutput(os.Stdout)
 }
 
@@ -78,22 +80,25 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// List of authorized referers should provisioned via GODINARY_ALLOW_HOSTS
 	// environment variable. Empty referer is always allowed because
 	// development issues
-	// var (
-	// 	allowed     bool
-	// 	httpReferer string
-	// )
-	//
-	// httpReferer = r.Header.Get("Referer")
-	// for _, domain := range AllowedReferers {
-	// 	if domain == httpReferer {
-	// 		allowed = true
-	// 	}
-	// }
-	//
-	// if !allowed {
-	// 	http.Error(w, "Referer not allowed", http.StatusForbidden)
-	// 	return
-	// }
+	var (
+		allowed     bool
+		httpReferer string
+	)
+
+	httpReferer = r.Header.Get("Referer")
+	if httpReferer != "" {
+		info, _ := url.Parse(httpReferer)
+		for _, domain := range AllowedReferers {
+			if domain == info.Host {
+				allowed = true
+			}
+		}
+
+		if !allowed {
+			http.Error(w, "Referer not allowed", http.StatusForbidden)
+			return
+		}
+	}
 	// Manage route is is allowed
 	for key, h := range mux {
 		if strings.Index(r.URL.String(), key) == 0 {

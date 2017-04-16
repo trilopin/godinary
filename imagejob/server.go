@@ -37,7 +37,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	urlInfo := strings.Replace(r.URL.Path, "/hundredrooms/image/fetch/", "", 1)
+	urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
 
 	job := NewImageJob()
 	job.AcceptWebp = strings.Contains(r.Header["Accept"][0], "image/webp")

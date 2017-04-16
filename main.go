@@ -58,7 +58,7 @@ func main() {
 	}
 
 	mux = map[string]func(http.ResponseWriter, *http.Request){
-		"/hundredrooms/image/fetch/": imagejob.Fetch,
+		"/image/fetch/": imagejob.Fetch,
 	}
 
 	fmt.Println("Listening on port", Port)

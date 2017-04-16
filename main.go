@@ -62,7 +62,11 @@ func main() {
 	}
 
 	fmt.Println("Listening on port", Port)
-	server.ListenAndServe()
+	// server.ListenAndServe()
+	err := server.ListenAndServeTLS("server.pem", "server.key")
+	if err != nil {
+		log.Fatal("ListenAndServe: ", err)
+	}
 }
 
 type myHandler struct{}
@@ -74,22 +78,22 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// List of authorized referers should provisioned via GODINARY_ALLOW_HOSTS
 	// environment variable. Empty referer is always allowed because
 	// development issues
-	var (
-		allowed     bool
-		httpReferer string
-	)
-
-	httpReferer = r.Header.Get("Referer")
-	for _, domain := range AllowedReferers {
-		if domain == httpReferer {
-			allowed = true
-		}
-	}
-
-	if !allowed {
-		http.Error(w, "Referer not allowed", http.StatusForbidden)
-		return
-	}
+	// var (
+	// 	allowed     bool
+	// 	httpReferer string
+	// )
+	//
+	// httpReferer = r.Header.Get("Referer")
+	// for _, domain := range AllowedReferers {
+	// 	if domain == httpReferer {
+	// 		allowed = true
+	// 	}
+	// }
+	//
+	// if !allowed {
+	// 	http.Error(w, "Referer not allowed", http.StatusForbidden)
+	// 	return
+	// }
 	// Manage route is is allowed
 	for key, h := range mux {
 		if strings.Index(r.URL.String(), key) == 0 {

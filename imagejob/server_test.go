@@ -46,7 +46,7 @@ var fetchCases = []struct {
 	{
 		"/image/fetch/w_500,c_limit/",
 		"GET",
-		500,
+		404,
 		"Non existent URI",
 	},
 }

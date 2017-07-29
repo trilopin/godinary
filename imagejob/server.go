@@ -38,7 +38,6 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
-
 	job := NewImageJob()
 	job.AcceptWebp = strings.Contains(r.Header["Accept"][0], "image/webp")
 
@@ -48,15 +47,12 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	domain, err := topDomain(job.Source.URL)
-	if err != nil || domain == "" {
-		http.Error(w, "Cannot parse hostname", http.StatusInternalServerError)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return
 	}
-	domainThrotle, ok := SpecificThrotling[domain]
-	if !ok {
-		domainThrotle = make(chan struct{}, MaxRequestPerDomain)
-		SpecificThrotling[domain] = domainThrotle
-	}
+	domainThrotle := make(chan struct{}, MaxRequestPerDomain)
+	SpecificThrotling[domain] = domainThrotle
 
 	// derived image is already cached
 	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
@@ -67,7 +63,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Download if does not exists at storage, load otherwise
+	// Download if original image does not exists at storage, load otherwise
 	body, err = storage.StorageDriver.Read(job.Source.Hash)
 	var dSem float64
 	if err == nil {

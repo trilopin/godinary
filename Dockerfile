@@ -1,51 +1,32 @@
-FROM alpine:3.5
+# Start from a Debian image with the latest version of Go installed
+# and a workspace (GOPATH) configured at /go.
+FROM marcbachmann/libvips:latest
+MAINTAINER tomas@aparicio.me
 
-WORKDIR /tmp
-ENV LIBVIPS_VERSION_MAJOR 8
-ENV LIBVIPS_VERSION_MINOR 4
-ENV LIBVIPS_VERSION_PATCH 5
 
-RUN apk add --no-cache --virtual .build-deps \
-  gcc g++ make libc-dev \
-  curl \
-  automake \
-  libtool \
-  tar \
-  gettext && \
+# Go version to use
+ENV GOLANG_VERSION 1.8.1
 
-  apk add --no-cache --virtual .libdev-deps \
-  glib-dev \
-  libpng-dev \
-  libwebp-dev \
-  libexif-dev \
-  libxml2-dev \
-  libjpeg-turbo-dev && \
+# gcc for cgo
+RUN apt-get update && apt-get install -y \
+    gcc curl git libc6-dev make ca-certificates \
+    --no-install-recommends \
+  && rm -rf /var/lib/apt/lists/*
 
-  apk add --no-cache --virtual .run-deps \
-  glib \
-  libpng \
-  libwebp \
-  libexif \
-  libxml2 \
-  libjpeg-turbo && \
+ENV GOLANG_DOWNLOAD_URL https://golang.org/dl/go$GOLANG_VERSION.linux-amd64.tar.gz
 
-  LIBVIPS_VERSION=${LIBVIPS_VERSION_MAJOR}.${LIBVIPS_VERSION_MINOR}.${LIBVIPS_VERSION_PATCH} && \
-  curl -O http://www.vips.ecs.soton.ac.uk/supported/${LIBVIPS_VERSION_MAJOR}.${LIBVIPS_VERSION_MINOR}/vips-${LIBVIPS_VERSION}.tar.gz && \
-  tar zvxf vips-${LIBVIPS_VERSION}.tar.gz && \
-  cd vips-${LIBVIPS_VERSION} && \
-  ./configure --without-python --without-gsf && \
-  make -j4 && \
-  make install && \
-  rm -rf /tmp/vips-* && \
+RUN curl -fsSL --insecure "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz \
+  && tar -C /usr/local -xzf golang.tar.gz \
+  && rm golang.tar.gz
 
-  apk del .build-deps && \
-  apk del .libdev-deps && \
-  rm -rf /var/cache/apk/* && \
-  rm -rf /tmp/vips-*
+ENV GOPATH /go
+ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
-ENV CPATH /usr/local/include
-ENV LIBRARY_PATH /usr/local/lib
-ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
+WORKDIR $GOPATH
 
-ADD main /
-CMD ["/main"]
+# Fetch the latest version of the package
+RUN go get -u github.com/trilopin/godinary
+
+# Run the outyet command by default when the container starts.
+ENTRYPOINT ["/go/bin/godinary"]

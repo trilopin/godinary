@@ -1,10 +1,13 @@
 package imagejob
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
+
+	bimg "gopkg.in/h2non/bimg.v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/trilopin/godinary/storage"
@@ -17,7 +20,7 @@ var fetchCases = []struct {
 	message string
 }{
 	{
-		"/image/fetch/w_500,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg",
+		"/image/fetch/w_100,h_100,c_limit/http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg",
 		"GET",
 		200,
 		"Regular use",
@@ -43,7 +46,7 @@ var fetchCases = []struct {
 	{
 		"/image/fetch/w_500,c_limit/",
 		"GET",
-		500,
+		404,
 		"Non existent URI",
 	},
 }
@@ -72,7 +75,12 @@ func TestFetch(t *testing.T) {
 		assert.Equal(t, test.status, rr.Code, test.message)
 
 		if test.status == 200 {
-			assert.NotEqual(t, "", rr.Body.String())
+			buffer, err := ioutil.ReadAll(rr.Body)
+			assert.Nil(t, err)
+			img := bimg.NewImage(buffer)
+			size, _ := img.Size()
+			assert.Equal(t, 141, size.Height, "height")
+			assert.Equal(t, 100, size.Width, "width")
 		}
 	}
 }

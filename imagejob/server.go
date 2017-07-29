@@ -1,7 +1,6 @@
 package imagejob
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -31,6 +30,7 @@ var (
 // Fetch takes url + params in url to download image from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request) {
 	var body io.Reader
+	var dSem float64
 
 	t1 := time.Now()
 	if r.Method != "GET" {
@@ -41,6 +41,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	job := NewImageJob()
 	job.AcceptWebp = strings.Contains(r.Header["Accept"][0], "image/webp")
 
+	urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
 	if err := job.Parse(urlInfo); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
@@ -54,23 +55,23 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	domainThrotle := make(chan struct{}, MaxRequestPerDomain)
 	SpecificThrotling[domain] = domainThrotle
 
+
 	// derived image is already cached
 	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
 		if cached, err2 := ioutil.ReadAll(body); err2 == nil {
 			writeImage(w, cached, job.Target.Format)
-			fmt.Printf("\nC - TOTAL %0.5f", time.Since(t1).Seconds())
+			log.Printf("CACHED - TOTAL %0.5f", time.Since(t1).Seconds())
 			return
 		}
 	}
 
 	// Download if original image does not exists at storage, load otherwise
 	body, err = storage.StorageDriver.Read(job.Source.Hash)
-	var dSem float64
 	if err == nil {
 		job.Source.Load(body)
 	} else {
 		tSem := time.Now()
-		fmt.Printf("\n%s %d/%d %d/%d", domain, len(GlobalThrotling), cap(GlobalThrotling), len(domainThrotle), cap(domainThrotle))
+		log.Printf("SEM %s %d/%d %d/%d", domain, len(GlobalThrotling), cap(GlobalThrotling), len(domainThrotle), cap(domainThrotle))
 		GlobalThrotling <- struct{}{}
 		domainThrotle <- struct{}{}
 		dSem = time.Since(tSem).Seconds()
@@ -79,7 +80,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		<-GlobalThrotling
 
 		if err != nil {
-			http.Error(w, "Cannot download image", http.StatusInternalServerError)
+			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}
 	}
@@ -90,14 +91,14 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 
 	// do the process thing
 	if err := job.Target.Process(job.Source, storage.StorageDriver); err != nil {
-		log.Println(err)
-		http.Error(w, "Cannot process Image", http.StatusInternalServerError)
+		log.Println("Error processing image ", job.Source.URL, err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 	}
 	t3 := time.Now()
 
 	writeImage(w, job.Target.RawContent, job.Target.Format)
-	fmt.Printf(
-		"\nN - TOTAL %0.5f => SEM %0.5f, DOWN %0.5f, PROC %0.5f",
+	log.Printf(
+		"NEW - TOTAL %0.5f => SEM %0.5f, DOWN %0.5f, PROC %0.5f",
 		time.Since(t1).Seconds(), dSem,
 		t2.Sub(t1).Seconds()-dSem, t3.Sub(t2).Seconds())
 
@@ -109,10 +110,15 @@ func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) {
 	w.Write(buffer)
 }
 
-func topDomain(URL string) (string, error) {
+func getDomainThotle(URL string) (chan struct{}, string, error) {
 	info, err := url.Parse(URL)
 	if err != nil {
-		return "", errors.New("Cannot parse hostname")
+		return nil, "", err
 	}
-	return info.Host, nil
+	domainThrotle, ok := SpecificThrotling[info.Host]
+	if !ok {
+		domainThrotle = make(chan struct{}, MaxRequestPerDomain)
+		SpecificThrotling[info.Host] = domainThrotle
+	}
+	return domainThrotle, info.Host, nil
 }

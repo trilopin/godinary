@@ -21,6 +21,8 @@ Configuration (via env vars)
 - GODINARY_MAX_REQUEST: number of concurrent external requests (default 20)
 - GODINARY_PORT: http server port (default 3002)
 - GODINARY_ALLOW_HOSTS: list of referer hostnames allowed (blank is allways allowed)
+- GODINARY_STORAGE: gs for google storage and fs for filesystem (default)
+- GODINARY_FS_BASE: base dir for filesystem storage
 ```
 
 

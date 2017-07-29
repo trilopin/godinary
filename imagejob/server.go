@@ -1,6 +1,7 @@
 package imagejob
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -41,20 +42,18 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	job := NewImageJob()
 	job.AcceptWebp = strings.Contains(r.Header["Accept"][0], "image/webp")
 
-	urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
 	if err := job.Parse(urlInfo); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
 	domain, err := topDomain(job.Source.URL)
-	if err != nil {
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	if err != nil || domain == "" {
+		http.Error(w, "Cannot parse domain", http.StatusInternalServerError)
 		return
 	}
 	domainThrotle := make(chan struct{}, MaxRequestPerDomain)
 	SpecificThrotling[domain] = domainThrotle
-
 
 	// derived image is already cached
 	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
@@ -104,21 +103,16 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func topDomain(URL string) (string, error) {
+	info, err := url.Parse(URL)
+	if err != nil {
+		return "", errors.New("Cannot parse hostname")
+	}
+	return info.Host, nil
+}
+
 func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) {
 	w.Header().Set("Content-Length", strconv.Itoa(len(buffer)))
 	w.Header().Set("Content-Type", fmt.Sprintf("image/%s", bimg.ImageTypes[format]))
 	w.Write(buffer)
-}
-
-func getDomainThotle(URL string) (chan struct{}, string, error) {
-	info, err := url.Parse(URL)
-	if err != nil {
-		return nil, "", err
-	}
-	domainThrotle, ok := SpecificThrotling[info.Host]
-	if !ok {
-		domainThrotle = make(chan struct{}, MaxRequestPerDomain)
-		SpecificThrotling[info.Host] = domainThrotle
-	}
-	return domainThrotle, info.Host, nil
 }

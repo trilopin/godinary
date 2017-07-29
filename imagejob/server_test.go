@@ -44,7 +44,7 @@ var fetchCases = []struct {
 		"Wrong filter",
 	},
 	{
-		"/image/fetch/w_500,c_limit/",
+		"/image/fetch/w_500,c_limit/http://fake.dot.org/wiksdafadsfasdfadsfipedi",
 		"GET",
 		404,
 		"Non existent URI",

@@ -52,8 +52,9 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Cannot parse domain", http.StatusInternalServerError)
 		return
 	}
-	domainThrotle := make(chan struct{}, MaxRequestPerDomain)
-	SpecificThrotling[domain] = domainThrotle
+	if _, ok := SpecificThrotling[domain]; !ok {
+		SpecificThrotling[domain] = make(chan struct{}, MaxRequestPerDomain)
+	}
 
 	// derived image is already cached
 	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
@@ -70,12 +71,13 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		job.Source.Load(body)
 	} else {
 		tSem := time.Now()
-		log.Printf("SEM %s %d/%d %d/%d", domain, len(GlobalThrotling), cap(GlobalThrotling), len(domainThrotle), cap(domainThrotle))
+		//log.Printf("SEM %s %d/%d %d/%d", domain, len(GlobalThrotling), cap(GlobalThrotling))
+		log.Printf("SEM %s %d/%d %d/%d", domain, len(GlobalThrotling), cap(GlobalThrotling), len(SpecificThrotling[domain]), cap(SpecificThrotling[domain]))
 		GlobalThrotling <- struct{}{}
-		domainThrotle <- struct{}{}
+		SpecificThrotling[domain] <- struct{}{}
 		dSem = time.Since(tSem).Seconds()
 		err = job.Source.Download(storage.StorageDriver)
-		<-domainThrotle
+		<-SpecificThrotling[domain]
 		<-GlobalThrotling
 
 		if err != nil {

@@ -17,6 +17,9 @@ import (
 // Port exposed by http server
 var Port string
 
+// SSLDir is the directory containing server.pem and server.key files
+var SSLDir string
+
 // AllowedReferers is the list of hosts allowed to request images
 var AllowedReferers []string
 
@@ -24,6 +27,11 @@ func init() {
 	Port = os.Getenv("GODINARY_PORT")
 	if Port == "" {
 		Port = "3002"
+	}
+
+	SSLDir = os.Getenv("GODINARY_SSL_DIR")
+	if SSLDir == "" {
+		SSLDir = "/app/"
 	}
 
 	AllowedReferers = strings.Split(os.Getenv("GODINARY_ALLOW_HOSTS"), ",")
@@ -63,9 +71,8 @@ func main() {
 		"/image/fetch/": imagejob.Fetch,
 	}
 
-	fmt.Println("Listening on port", Port)
-	// server.ListenAndServe()
-	err := server.ListenAndServeTLS("server.pem", "server.key")
+	fmt.Println("Listening with SSL on port", Port)
+	err := server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}

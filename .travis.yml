@@ -3,9 +3,12 @@ language: go
 go:
   - 1.6
   - 1.7
+  - 1.8
   - master
 
-install: 
+install:
+
   - curl -s https://raw.githubusercontent.com/h2non/bimg/master/preinstall.sh | sudo bash -
+  - make local-certs
   - make get-deps
 script: make test

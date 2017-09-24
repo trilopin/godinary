@@ -1,19 +1,23 @@
 
 get-deps:
-	go get gopkg.in/h2non/bimg.v1
-	go get cloud.google.com/go/storage
-	go get github.com/stretchr/testify/assert
+	glide install
 
 build:
-	docker build -t godinary .
+	docker build -t godinary:latest .
 
-test:
+local-test:
 	cd imagejob && go test -v .
 	cd storage && go test -v .
 
-run:
-	docker run -p 3002:3002 --env-file .env -ti godinary
+local-certs:
+	openssl genrsa -out server.key 2048 && openssl ecparam -genkey -name secp384r1 -out server.key && openssl req -new -x509 -sha256 -key server.key -out server.pem -days 3650 -subj /C=US/ST=City/L=City/O=company/OU=SSLServers/CN=localhost/emailAddress=me@example.com
 
-local:
-	go build -a -v -o main
-	GODINARY_FS_BASE=/Users/jpeso/godinary_data/ ./main
+test:
+	docker run -p 3002:3002 --env-file .env --entrypoint sh -ti godinary:latest
+
+run:
+	docker run -p 3002:3002 --env-file .env \
+	       -v $$PWD/data/:/data/ \
+		   -v $$PWD/server.key:/app/server.key \
+		   -v $$PWD/server.pem:/app/server.pem \
+		   -ti godinary:latest

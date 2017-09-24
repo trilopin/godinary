@@ -24,5 +24,12 @@ _testmain.go
 *.prof
 main
 gin-bin
+.vscode
+vendor
+glide.lock
 
+# godinary
 .env
+server.key
+server.pem
+data

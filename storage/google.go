@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"golang.org/x/net/context"
+	"google.golang.org/api/option"
 
 	gs "cloud.google.com/go/storage"
 )
@@ -28,8 +29,14 @@ func NewGoogleStorageDriver() *GoogleStorageDriver {
 	if gsw.bucketName == "" {
 		panic("GODINARY_GS_BUCKET should be setted")
 	}
+
+	serviceAccount := os.Getenv("GODINARY_GS_CREDENTIALS")
+	if serviceAccount == "" {
+		panic("GODINARY_GS_CREDENTIALS should be setted")
+	}
+
 	ctx := context.Background()
-	client, err := gs.NewClient(ctx)
+	client, err := gs.NewClient(ctx, option.WithServiceAccountFile(serviceAccount))
 	if err != nil {
 		panic("error in gstorage")
 	}
@@ -42,15 +49,19 @@ func (gsw *GoogleStorageDriver) Write(buf []byte, hash string) error {
 	ctx := context.Background()
 	_, newHash := makeFoldersFromHash(hash, "", 5)
 	wc := gsw.bucket.Object(newHash).NewWriter(ctx)
+	defer wc.Close()
 	if _, err := wc.Write(buf); err != nil {
-		return err
-	}
-	if err := wc.Close(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (fs *GoogleStorageDriver) Read(hash string) (io.Reader, error) {
-	return nil, nil
+func (gsw *GoogleStorageDriver) Read(hash string) (io.Reader, error) {
+	ctx := context.Background()
+	_, newHash := makeFoldersFromHash(hash, "", 5)
+	rc, err := gsw.bucket.Object(newHash).NewReader(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return rc, nil
 }

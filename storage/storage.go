@@ -16,6 +16,7 @@ type Driver interface {
 	Read(hash string) (io.Reader, error)
 }
 
+// makeFoldersFromHash compute new path in n folders and prefix based on current path
 func makeFoldersFromHash(path string, prefix string, n int) (string, string) {
 	var newPath bytes.Buffer
 	newPath.WriteString(prefix)

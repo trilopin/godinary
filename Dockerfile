@@ -1,5 +1,6 @@
-# Start from a Debian image with the latest version of Go installed
-# and a workspace (GOPATH) configured at /go.
+#######################
+## stage -> builder
+#######################
 FROM golang:1.8.3-stretch as builder
 
 # gcc for cgo
@@ -16,6 +17,15 @@ ENV SRC_DIR=/go/src/github.com/trilopin/godinary/
 ADD . /go/src/github.com/trilopin/godinary/
 RUN make get-deps
 RUN go build -o godinary 
-RUN mkdir /app && cp godinary /app/
  
+ 
+#######################
+## stage -> runner
+#######################
+FROM debian:stretch as runner
+RUN mkdir /app 
+COPY --from=builder /usr/lib/x86_64-linux-gnu/ /usr/lib/x86_64-linux-gnu/
+COPY --from=builder /lib/ /lib/
+COPY --from=builder /go/src/github.com/trilopin/godinary/godinary /app/
 ENTRYPOINT ["/app/godinary"]
+	

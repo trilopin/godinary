@@ -21,10 +21,20 @@ func TestExtractInfo(t *testing.T) {
 	img := Image{}
 	r, _ := os.Open("testdata/fiveyears.jpg")
 	img.Load(r)
-	img.ExtractInfo()
+	err := img.ExtractInfo()
+	assert.Nil(t, err)
 	assert.Equal(t, img.Height, 733)
 	assert.Equal(t, img.Width, 1262)
 	assert.Equal(t, img.AspectRatio, float32(1.7216917))
+}
+
+func TestExtractInfoFail(t *testing.T) {
+	img := Image{}
+	r, _ := os.Open("testdata/corrupted-image.jpg.jpg")
+	img.Load(r)
+	err := img.ExtractInfo()
+	assert.Equal(t, err, errors.New("Can't extract dimensions"))
+
 }
 
 func TestDownload(t *testing.T) {

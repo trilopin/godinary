@@ -4,25 +4,29 @@ Image proxy with live resize &amp; tranformations
 
 Install
 ```
-go get github.com/trilopin/godinary
+git clone https://github.com/trilopin/godinary
 ```
 
 
 
-Tooling & Docker
+Docker flow:
 - make build -> compiles and build docker image
-- make get-deps -> retrieves dependencies
-- make test -> launch tests
 - make run -> start server
 
+Development flow:
+- glide install
+- GODINARY_FS_BASE=data GODINARY_ALLOW_HOSTS=<HOST>, GODINARY_SSL_DIR=./ go run main.go
 
 Configuration (via env vars)
 ```
 - GODINARY_MAX_REQUEST: number of concurrent external requests (default 20)
 - GODINARY_PORT: http server port (default 3002)
 - GODINARY_ALLOW_HOSTS: list of referer hostnames allowed (blank is allways allowed)
-- GODINARY_STORAGE: gs for google storage and fs for filesystem (default)
+- GODINARY_STORAGE: gs for google storage and fs for filesystem (default: "fs")
 - GODINARY_FS_BASE: base dir for filesystem storage
+- GODINARY_SENTRY_URL: sentry dsn for error tracking (default: "")
+- GODINARY_RELEASE: commit hash for this release, used with sentry (default: "")
+- GODINARY_SSL_DIR: SSL certs directory (default: "/app/")
 ```
 
 

@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	raven "github.com/getsentry/raven-go"
 	"github.com/trilopin/godinary/storage"
 
 	bimg "gopkg.in/h2non/bimg.v1"
@@ -43,12 +44,14 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	job.AcceptWebp = strings.Contains(r.Header["Accept"][0], "image/webp")
 
 	if err := job.Parse(urlInfo); err != nil {
+		raven.CaptureErrorAndWait(err, nil)
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
 
 	domain, err := topDomain(job.Source.URL)
 	if err != nil || domain == "" {
+		raven.CaptureErrorAndWait(err, nil)
 		http.Error(w, "Cannot parse domain", http.StatusInternalServerError)
 		return
 	}
@@ -81,6 +84,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		<-GlobalThrotling
 
 		if err != nil {
+			raven.CaptureErrorAndWait(err, nil)
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}

@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	raven "github.com/getsentry/raven-go"
 	"github.com/trilopin/godinary/imagejob"
 	"github.com/trilopin/godinary/storage"
 )
@@ -24,6 +25,20 @@ var SSLDir string
 var AllowedReferers []string
 
 func init() {
+	// Sentry setup https://docs.sentry.io/clients/go/
+	sentryURL := os.Getenv("GODINARY_SENTRY_URL")
+	sentryRelease := os.Getenv("GODINARY_RELEASE")
+
+	if sentryURL != "" {
+		raven.SetDSN(sentryURL)
+		if sentryRelease != "" {
+			raven.SetRelease(sentryRelease)
+		}
+		raven.CapturePanic(func() {
+			// do all of the scary things here
+		}, nil)
+	}
+
 	Port = os.Getenv("GODINARY_PORT")
 	if Port == "" {
 		Port = "3002"
@@ -68,7 +83,7 @@ func main() {
 	}
 
 	mux = map[string]func(http.ResponseWriter, *http.Request){
-		"/image/fetch/": imagejob.Fetch,
+		"/image/fetch/": raven.RecoveryHandler(imagejob.Fetch),
 	}
 
 	fmt.Println("Listening with SSL on port", Port)

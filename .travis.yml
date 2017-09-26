@@ -1,3 +1,4 @@
-service: docker
+services: 
+  - docker
 script: 
   - make build-test

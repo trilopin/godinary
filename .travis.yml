@@ -1,5 +1,9 @@
 services: 
   - docker
+
+addons:
+  packages:
+    - docker-ce
+
 script: 
-  - docker -v
   - make build-test

@@ -56,6 +56,7 @@ func (gsw *GoogleStorageDriver) Write(buf []byte, hash string) error {
 	return nil
 }
 
+// NewReader produces a handler for file in google storage
 func (gsw *GoogleStorageDriver) NewReader(hash string) (io.ReadCloser, error) {
 	ctx := context.Background()
 	_, newHash := makeFoldersFromHash(hash, "", 5)

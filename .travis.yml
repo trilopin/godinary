@@ -1,10 +1,18 @@
 language: go
 
+<<<<<<< HEAD
 services:
   - docker
 
 install:
   - make build
+=======
+go:
+  - 1.8
+
+install:
+  - glide install
+>>>>>>> master
 
 script: 
   - make test

@@ -14,7 +14,6 @@ import (
 
 	raven "github.com/getsentry/raven-go"
 	"github.com/trilopin/godinary/storage"
-
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
@@ -31,7 +30,7 @@ var (
 
 // Fetch takes url + params in url to download image from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request) {
-	var body io.Reader
+	var reader io.ReadCloser
 	var dSem float64
 
 	t1 := time.Now()
@@ -60,8 +59,9 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// derived image is already cached
-	if body, err = storage.StorageDriver.Read(job.Target.Hash); err == nil {
-		if cached, err2 := ioutil.ReadAll(body); err2 == nil {
+	if reader, err = storage.StorageDriver.NewReader(job.Target.Hash); err == nil {
+		defer reader.Close()
+		if cached, err2 := ioutil.ReadAll(reader); err2 == nil {
 			writeImage(w, cached, job.Target.Format)
 			log.Printf("CACHED - TOTAL %0.5f", time.Since(t1).Seconds())
 			return
@@ -69,12 +69,12 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Download if original image does not exists at storage, load otherwise
-	body, err = storage.StorageDriver.Read(job.Source.Hash)
+	reader, err = storage.StorageDriver.NewReader(job.Source.Hash)
 	if err == nil {
-		job.Source.Load(body)
+		defer reader.Close()
+		job.Source.Load(reader)
 	} else {
 		tSem := time.Now()
-		//log.Printf("SEM %s %d/%d %d/%d", domain, len(GlobalThrotling), cap(GlobalThrotling))
 		log.Printf("SEM %s %d/%d %d/%d", domain, len(GlobalThrotling), cap(GlobalThrotling), len(SpecificThrotling[domain]), cap(SpecificThrotling[domain]))
 		GlobalThrotling <- struct{}{}
 		SpecificThrotling[domain] <- struct{}{}

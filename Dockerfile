@@ -2,7 +2,7 @@
 ## stage -> builder
 #######################
 FROM golang:1.8.3-stretch as builder
-
+ARG RUNTESTS=0
 # gcc for cgo
 RUN apt-get update && apt-get install -y --no-install-recommends \
 		g++ wget gcc libc6-dev make pkg-config ca-certificates git curl \
@@ -16,10 +16,11 @@ WORKDIR /go/src/github.com/trilopin/godinary/
 ENV SRC_DIR=/go/src/github.com/trilopin/godinary/
 ADD . /go/src/github.com/trilopin/godinary/
 RUN make get-deps
+RUN if [ $RUNTESTS = 1 ]; then make test; fi
 RUN go build -o godinary 
  
  
-#######################
+####################### 
 ## stage -> runner
 #######################
 FROM debian:stretch as runner

@@ -89,6 +89,7 @@ func main() {
 	fmt.Println("Listening with SSL on port", Port)
 	err := server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
 	if err != nil {
+		raven.CaptureError(err, nil)
 		log.Fatal("ListenAndServe: ", err)
 	}
 }
@@ -98,7 +99,7 @@ type myHandler struct{}
 // ServeHTTP manage custom url multiplexing avoiding path.clean in
 // default go http mux.
 func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Manage authorization by htp Referer
+	// Manage authorization by http Referer
 	// List of authorized referers should provisioned via GODINARY_ALLOW_HOSTS
 	// environment variable. Empty referer is always allowed because
 	// development issues

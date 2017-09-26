@@ -52,7 +52,7 @@ func TestDownloadFailBecauseNoURL(t *testing.T) {
 func TestDownloadFailBecauseBadURL(t *testing.T) {
 	img := Image{URL: "fake"}
 	err := img.Download(nil)
-	assert.Equal(t, err, errors.New("Cannot download image"))
+	assert.Equal(t, err, errors.New("Cannot download image fake"))
 }
 
 func TestProcess(t *testing.T) {

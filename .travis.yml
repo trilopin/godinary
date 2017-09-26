@@ -2,8 +2,9 @@ services:
   - docker
 
 addons:
-  packages:
-    - docker-ce
+  apt:
+    packages:
+      - docker-ce
 
 script: 
   - make build-test

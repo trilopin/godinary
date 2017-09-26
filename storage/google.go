@@ -56,7 +56,7 @@ func (gsw *GoogleStorageDriver) Write(buf []byte, hash string) error {
 	return nil
 }
 
-func (gsw *GoogleStorageDriver) Read(hash string) (io.Reader, error) {
+func (gsw *GoogleStorageDriver) NewReader(hash string) (io.ReadCloser, error) {
 	ctx := context.Background()
 	_, newHash := makeFoldersFromHash(hash, "", 5)
 	rc, err := gsw.bucket.Object(newHash).NewReader(ctx)

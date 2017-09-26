@@ -32,7 +32,7 @@ func (fs *FileDriver) Write(buf []byte, hash string) error {
 	return err
 }
 
-func (fs *FileDriver) Read(hash string) (io.Reader, error) {
+func (fs *FileDriver) NewReader(hash string) (io.ReadCloser, error) {
 	_, newHash := makeFoldersFromHash(hash, fs.base, 3)
 	r, err := os.Open(newHash)
 	return r, err

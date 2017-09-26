@@ -1,10 +1,10 @@
-language: go
+services: 
+  - docker
 
-go:
-  - 1.8
-
-install:
-  - glide install
+addons:
+  apt:
+    packages:
+      - docker-ce
 
 script: 
-  - make test
+  - make build-test

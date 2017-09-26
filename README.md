@@ -15,7 +15,8 @@ Docker flow:
 
 Development flow:
 - glide install
-- GODINARY_FS_BASE=data GODINARY_ALLOW_HOSTS=<HOST>, GODINARY_SSL_DIR=./ go run main.go
+- GODINARY_FS_BASE=data GODINARY_ALLOW_HOSTS=<host>, GODINARY_SSL_DIR=./ go run main.go
+- GODINARY_GS_CREDENTIALS=<credential>.json GODINARY_ALLOW_HOSTS=<host>, GODINARY_SSL_DIR=./ GODINARY_STORAGE=gs GODINARY_GCE_PROJECT=<gce project> GODINARY_GS_BUCKET=<gce bucket>  go run main.go
 
 Configuration (via env vars)
 ```
@@ -27,6 +28,9 @@ Configuration (via env vars)
 - GODINARY_SENTRY_URL: sentry dsn for error tracking (default: "")
 - GODINARY_RELEASE: commit hash for this release, used with sentry (default: "")
 - GODINARY_SSL_DIR: SSL certs directory (default: "/app/")
+- GODINARY_GS_PROJECT: GCE project for Google Storage
+- GODINARY_GS_BUCKET: Bucket name in Google storage
+- GODINARY_GS_CREDENTIALS: service account json file for Google storage
 ```
 
 

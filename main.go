@@ -84,6 +84,9 @@ func main() {
 
 	mux = map[string]func(http.ResponseWriter, *http.Request){
 		"/image/fetch/": raven.RecoveryHandler(imagejob.Fetch),
+		"/up": func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintf(w, "up")
+		},
 	}
 
 	fmt.Println("Listening with SSL on port", Port)

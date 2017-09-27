@@ -114,7 +114,7 @@ func (job *ImageJob) crop() error {
 		} else {
 			job.Target.Height = int(float32(job.Target.Width) / job.Source.AspectRatio)
 		}
-		// Same as Fit but limiting size to original image
+	// Same as Fit but limiting size to original image
 	case "limit":
 		if job.Target.Height > job.Source.Height || job.Target.Width > job.Source.Width {
 			job.Target.Width = job.Source.Width
@@ -126,6 +126,7 @@ func (job *ImageJob) crop() error {
 				job.Target.Height = int(float32(job.Target.Width) / job.Source.AspectRatio)
 			}
 		}
+	// do not preserve nothing, respect callers decision
 	case "scale":
 		if job.Target.Width == 0 {
 			job.Target.Width = job.Target.Height
@@ -134,6 +135,5 @@ func (job *ImageJob) crop() error {
 			job.Target.Height = job.Target.Width
 		}
 	}
-
 	return nil
 }

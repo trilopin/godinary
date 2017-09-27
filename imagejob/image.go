@@ -52,7 +52,7 @@ func (img *Image) Download(sd storage.Driver) error {
 
 	resp, err := c.Get(img.URL)
 	if err != nil || resp.StatusCode >= 400 {
-		return errors.New("Cannot download image")
+		return errors.New("Cannot download image " + img.URL)
 	}
 
 	if sd != nil {

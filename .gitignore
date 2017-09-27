@@ -27,9 +27,11 @@ gin-bin
 .vscode
 vendor
 glide.lock
+internal.md
 
 # godinary
-.env
+.env*
+secrets.yml
 server.key
 server.pem
 data

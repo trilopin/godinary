@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 
+	"github.com/getsentry/raven-go"
+
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 
@@ -19,6 +21,8 @@ type GoogleStorageDriver struct {
 // NewGoogleStorageDriver constructs new GoogleStorageDriver
 func NewGoogleStorageDriver() *GoogleStorageDriver {
 	var gsw GoogleStorageDriver
+	var err error
+	var client *gs.Client
 
 	gceProject := os.Getenv("GODINARY_GCE_PROJECT")
 	if gceProject == "" {
@@ -31,12 +35,13 @@ func NewGoogleStorageDriver() *GoogleStorageDriver {
 	}
 
 	serviceAccount := os.Getenv("GODINARY_GS_CREDENTIALS")
-	if serviceAccount == "" {
-		panic("GODINARY_GS_CREDENTIALS should be setted")
-	}
 
 	ctx := context.Background()
-	client, err := gs.NewClient(ctx, option.WithServiceAccountFile(serviceAccount))
+	if serviceAccount == "" {
+		client, err = gs.NewClient(ctx)
+	} else {
+		client, err = gs.NewClient(ctx, option.WithServiceAccountFile(serviceAccount))
+	}
 	if err != nil {
 		panic("error in gstorage")
 	}
@@ -56,11 +61,13 @@ func (gsw *GoogleStorageDriver) Write(buf []byte, hash string) error {
 	return nil
 }
 
+// NewReader produces a handler for file in google storage
 func (gsw *GoogleStorageDriver) NewReader(hash string) (io.ReadCloser, error) {
 	ctx := context.Background()
 	_, newHash := makeFoldersFromHash(hash, "", 5)
 	rc, err := gsw.bucket.Object(newHash).NewReader(ctx)
 	if err != nil {
+		raven.CaptureError(err, nil) // it's called in a goroutine
 		return nil, err
 	}
 	return rc, nil

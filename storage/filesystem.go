@@ -32,6 +32,7 @@ func (fs *FileDriver) Write(buf []byte, hash string) error {
 	return err
 }
 
+// NewReader produces a file descriptor
 func (fs *FileDriver) NewReader(hash string) (io.ReadCloser, error) {
 	_, newHash := makeFoldersFromHash(hash, fs.base, 3)
 	r, err := os.Open(newHash)

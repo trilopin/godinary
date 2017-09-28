@@ -1,0 +1,15 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  labels:
+    project: godinary
+  name: godinary
+  namespace: production
+spec:
+  maxReplicas: <max replicas>
+  minReplicas: <min replicas>
+  scaleTargetRef:
+    apiVersion: extensions/v1beta1
+    kind: Deployment
+    name: godinary
+  targetCPUUtilizationPercentage: 50

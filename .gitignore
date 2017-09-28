@@ -26,6 +26,7 @@ main
 gin-bin
 .vscode
 vendor
+deploy/*.yml
 glide.lock
 internal.md
 
@@ -35,3 +36,4 @@ secrets.yml
 server.key
 server.pem
 data
+godinary

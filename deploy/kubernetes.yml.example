@@ -44,7 +44,7 @@ spec:
           - name: godinary-data
             readOnly: true
             mountPath: /app/data
-        image: gcr.io/godinary-181111/godinary:db8bfd2c4104
+        image: <route to godinary image>
         resources:
           requests:
             memory: "256Mi"

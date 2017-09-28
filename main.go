@@ -115,8 +115,9 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if httpReferer != "" {
 		info, _ := url.Parse(httpReferer)
 		for _, domain := range AllowedReferers {
-			if domain == info.Host {
+			if domain != "" && strings.HasSuffix(info.Host, domain) {
 				allowed = true
+				break
 			}
 		}
 

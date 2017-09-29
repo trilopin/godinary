@@ -118,7 +118,7 @@ func topDomain(URL string) (string, error) {
 }
 
 func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) {
-	w.Header().Set("Cache-Control", "public, max-age:604800")
+	w.Header().Set("Cache-Control", "public, max-age=604800")
 	w.Header().Set("Content-Length", strconv.Itoa(len(buffer)))
 	w.Header().Set("Content-Type", fmt.Sprintf("image/%s", bimg.ImageTypes[format]))
 	w.Write(buffer)

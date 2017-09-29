@@ -34,7 +34,7 @@ func setupConfig() {
 	flag.String("port", "3002", "Port where the https server listen")
 	flag.String("ssl_dir", "/app/", "Path to directory with server.key and server.pem SSL files")
 	flag.Int("max_request", 100, "Maximum number of simultaneous downloads")
-	flag.Int("ssl_max_request_domain", 10, "Maximum number of simultaneous downloads per domain")
+	flag.Int("max_request_domain", 10, "Maximum number of simultaneous downloads per domain")
 	flag.String("storage", "fs", "Storage type: 'gs' for google storage or 'fs' for filesystem")
 	flag.String("fs_base", "", "FS option: Base dir for filesystem storage")
 	flag.String("gce_project", "", "GS option: Sentry DSN for error tracking")

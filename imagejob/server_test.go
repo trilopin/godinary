@@ -9,6 +9,7 @@ import (
 
 	bimg "gopkg.in/h2non/bimg.v1"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/trilopin/godinary/storage"
 )
@@ -53,7 +54,7 @@ var fetchCases = []struct {
 
 func setupModule() {
 
-	os.Setenv("GODINARY_FS_BASE", "/tmp/.godinary/")
+	viper.Set("fs_base", "/tmp/.godinary/")
 	storage.StorageDriver = storage.NewFileDriver()
 	MaxRequest = 2
 	MaxRequestPerDomain = 1

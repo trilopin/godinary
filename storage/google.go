@@ -2,9 +2,9 @@ package storage
 
 import (
 	"io"
-	"os"
 
 	"github.com/getsentry/raven-go"
+	"github.com/spf13/viper"
 
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
@@ -24,17 +24,17 @@ func NewGoogleStorageDriver() *GoogleStorageDriver {
 	var err error
 	var client *gs.Client
 
-	gceProject := os.Getenv("GODINARY_GCE_PROJECT")
+	gceProject := viper.GetString("gce_project")
 	if gceProject == "" {
 		panic("GODINARY_GCE_PROJECT should be setted")
 	}
 
-	gsw.bucketName = os.Getenv("GODINARY_GS_BUCKET")
+	gsw.bucketName = viper.GetString("gs_bucket")
 	if gsw.bucketName == "" {
 		panic("GODINARY_GS_BUCKET should be setted")
 	}
 
-	serviceAccount := os.Getenv("GODINARY_GS_CREDENTIALS")
+	serviceAccount := viper.GetString("gs_credentials")
 
 	ctx := context.Background()
 	if serviceAccount == "" {

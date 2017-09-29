@@ -5,21 +5,22 @@ import (
 	"os"
 	"testing"
 
+	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewFileDriver(t *testing.T) {
-	os.Setenv("GODINARY_FS_BASE", "BASE")
+	viper.Set("fs_base", "base")
 	fw := NewFileDriver()
 	assert.NotNil(t, fw)
-	assert.Equal(t, fw.base, "BASE")
-	os.Setenv("GODINARY_FS_BASE", "")
+	assert.Equal(t, fw.base, "base")
+	viper.Set("fs_base", "")
 }
 
 // TODO: replace this fixed jpeso route
 func TestWrite(t *testing.T) {
 	buf := []byte("CONTENT")
-	os.Setenv("GODINARY_FS_BASE", "/tmp/.godtmp/")
+	viper.Set("fs_base", "/tmp/.godtmp/")
 	fw := NewFileDriver()
 	err := fw.Write(buf, "aabbccddee")
 	assert.Nil(t, err)

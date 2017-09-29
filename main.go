@@ -1,16 +1,18 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 
 	raven "github.com/getsentry/raven-go"
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 	"github.com/trilopin/godinary/imagejob"
 	"github.com/trilopin/godinary/storage"
 )
@@ -24,47 +26,59 @@ var SSLDir string
 // AllowedReferers is the list of hosts allowed to request images
 var AllowedReferers []string
 
-func init() {
-	// Sentry setup https://docs.sentry.io/clients/go/
-	sentryURL := os.Getenv("GODINARY_SENTRY_URL")
-	sentryRelease := os.Getenv("GODINARY_RELEASE")
+func setupConfig() {
+	// flags setup
+	flag.String("sentry_url", "", "Sentry DSN for error tracking")
+	flag.String("release", "", "Release hash to notify sentry")
+	flag.String("allow_hosts", "", "Domains authorized to ask godinary separated by commas (A comma at the end allows empty referers)")
+	flag.String("port", "3002", "Port where the https server listen")
+	flag.String("ssl_dir", "/app/", "Path to directory with server.key and server.pem SSL files")
+	flag.Int("max_request", 100, "Maximum number of simultaneous downloads")
+	flag.Int("ssl_max_request_domain", 10, "Maximum number of simultaneous downloads per domain")
+	flag.String("storage", "fs", "Storage type: 'gs' for google storage or 'fs' for filesystem")
+	flag.String("fs_base", "", "FS option: Base dir for filesystem storage")
+	flag.String("gce_project", "", "GS option: Sentry DSN for error tracking")
+	flag.String("gs_bucket", "", "GS option: Bucket name")
+	flag.String("gs_credentials", "", "GS option: Path to service account file with Google Storage credentials")
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+	viper.BindPFlags(pflag.CommandLine)
 
-	if sentryURL != "" {
-		raven.SetDSN(sentryURL)
-		if sentryRelease != "" {
-			raven.SetRelease(sentryRelease)
+	// env setup
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("godinary")
+	flag.VisitAll(func(f *flag.Flag) {
+		viper.BindEnv(f.Name)
+	})
+}
+
+func init() {
+
+	setupConfig()
+
+	if viper.GetString("sentry_url") != "" {
+		raven.SetDSN(viper.GetString("sentry_url"))
+		if viper.GetString("release") != "" {
+			raven.SetRelease(viper.GetString("release"))
 		}
 		raven.CapturePanic(func() {
 			// do all of the scary things here
 		}, nil)
 	}
 
-	Port = os.Getenv("GODINARY_PORT")
-	if Port == "" {
-		Port = "3002"
-	}
+	Port = viper.GetString("port")
+	SSLDir = viper.GetString("ssl_dir")
 
-	SSLDir = os.Getenv("GODINARY_SSL_DIR")
-	if SSLDir == "" {
-		SSLDir = "/app/"
-	}
+	AllowedReferers = strings.Split(viper.GetString("allow_hosts"), ",")
 
-	AllowedReferers = strings.Split(os.Getenv("GODINARY_ALLOW_HOSTS"), ",")
-
-	if os.Getenv("GODINARY_STORAGE") == "gs" {
+	if viper.GetString("storage") == "gs" {
 		storage.StorageDriver = storage.NewGoogleStorageDriver()
 	} else {
 		storage.StorageDriver = storage.NewFileDriver()
 	}
 
-	imagejob.MaxRequest, _ = strconv.Atoi(os.Getenv("GODINARY_MAX_REQUEST"))
-	if imagejob.MaxRequest == 0 {
-		imagejob.MaxRequest = 100
-	}
-	imagejob.MaxRequestPerDomain, _ = strconv.Atoi(os.Getenv("GODINARY_MAX_REQUEST_DOMAIN"))
-	if imagejob.MaxRequestPerDomain == 0 {
-		imagejob.MaxRequestPerDomain = 10
-	}
+	imagejob.MaxRequest = viper.GetInt("max_request")
+	imagejob.MaxRequestPerDomain = viper.GetInt("max_request_domain")
 
 	// globalSemaphore controls concurrent http client requests
 	imagejob.SpecificThrotling = make(map[string]chan struct{}, 20)

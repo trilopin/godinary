@@ -33,6 +33,8 @@ func setupConfig() {
 	flag.String("allow_hosts", "", "Domains authorized to ask godinary separated by commas (A comma at the end allows empty referers)")
 	flag.String("port", "3002", "Port where the https server listen")
 	flag.String("ssl_dir", "/app/", "Path to directory with server.key and server.pem SSL files")
+	flag.Int("max_request", 100, "Maximum number of simultaneous downloads")
+	flag.Int("ssl_max_request_domain", 10, "Maximum number of simultaneous downloads per domain")
 	flag.String("storage", "fs", "Storage type: 'gs' for google storage or 'fs' for filesystem")
 	flag.String("fs_base", "", "FS option: Base dir for filesystem storage")
 	flag.String("gce_project", "", "GS option: Sentry DSN for error tracking")
@@ -74,6 +76,9 @@ func init() {
 	} else {
 		storage.StorageDriver = storage.NewFileDriver()
 	}
+
+	imagejob.MaxRequest = viper.GetInt("max_request")
+	imagejob.MaxRequestPerDomain = viper.GetInt("max_request_domain")
 
 	// globalSemaphore controls concurrent http client requests
 	imagejob.SpecificThrotling = make(map[string]chan struct{}, 20)

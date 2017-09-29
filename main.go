@@ -35,6 +35,7 @@ func setupConfig() {
 	flag.String("ssl_dir", "/app/", "Path to directory with server.key and server.pem SSL files")
 	flag.Int("max_request", 100, "Maximum number of simultaneous downloads")
 	flag.Int("max_request_domain", 10, "Maximum number of simultaneous downloads per domain")
+	flag.String("cdn_ttl", "604800", "Number of seconds images wil be cached in CDN")
 	flag.String("storage", "fs", "Storage type: 'gs' for google storage or 'fs' for filesystem")
 	flag.String("fs_base", "", "FS option: Base dir for filesystem storage")
 	flag.String("gce_project", "", "GS option: Sentry DSN for error tracking")

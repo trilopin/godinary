@@ -12,8 +12,8 @@ var (
 
 // Driver is the interface for saving images
 type Driver interface {
-	Write(buf []byte, hash string) error
-	NewReader(hash string) (io.ReadCloser, error)
+	Write(buf []byte, hash string, prefix string) error
+	NewReader(hash string, prefix string) (io.ReadCloser, error)
 }
 
 // makeFoldersFromHash compute new path in n folders and prefix based on current path

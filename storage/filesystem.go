@@ -24,9 +24,9 @@ func NewFileDriver() *FileDriver {
 }
 
 // Write in filesystem a bytearray
-func (fs *FileDriver) Write(buf []byte, hash string) error {
+func (fs *FileDriver) Write(buf []byte, hash string, prefix string) error {
 	dir, newHash := makeFoldersFromHash(hash, fs.base, 3)
-	err := os.MkdirAll(dir, 0744)
+	err := os.MkdirAll(prefix+dir, 0744)
 	if err != nil {
 		return err
 	}
@@ -35,8 +35,8 @@ func (fs *FileDriver) Write(buf []byte, hash string) error {
 }
 
 // NewReader produces a file descriptor
-func (fs *FileDriver) NewReader(hash string) (io.ReadCloser, error) {
+func (fs *FileDriver) NewReader(hash string, prefix string) (io.ReadCloser, error) {
 	_, newHash := makeFoldersFromHash(hash, fs.base, 3)
-	r, err := os.Open(newHash)
+	r, err := os.Open(prefix + newHash)
 	return r, err
 }

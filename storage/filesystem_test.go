@@ -22,7 +22,7 @@ func TestWrite(t *testing.T) {
 	buf := []byte("CONTENT")
 	viper.Set("fs_base", "/tmp/.godtmp/")
 	fw := NewFileDriver()
-	err := fw.Write(buf, "aabbccddee")
+	err := fw.Write(buf, "aabbccddee", "")
 	assert.Nil(t, err)
 
 	buf, err = ioutil.ReadFile("/tmp/.godtmp/aa/bb/cc/aabbccddee")

@@ -61,7 +61,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// derived image is already cached
-	if reader, err = storage.StorageDriver.NewReader(job.Target.Hash); err == nil {
+	if reader, err = storage.StorageDriver.NewReader(job.Target.Hash, "derived"); err == nil {
 		defer reader.Close()
 		if cached, err2 := ioutil.ReadAll(reader); err2 == nil {
 			writeImage(w, cached, job.Target.Format)
@@ -71,7 +71,7 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Download if original image does not exists at storage, load otherwise
-	reader, err = storage.StorageDriver.NewReader(job.Source.Hash)
+	reader, err = storage.StorageDriver.NewReader(job.Source.Hash, "source")
 	if err == nil {
 		defer reader.Close()
 		job.Source.Load(reader)

@@ -50,10 +50,10 @@ func NewGoogleStorageDriver() *GoogleStorageDriver {
 }
 
 // Write in filesystem a bytearray
-func (gsw *GoogleStorageDriver) Write(buf []byte, hash string) error {
+func (gsw *GoogleStorageDriver) Write(buf []byte, hash string, prefix string) error {
 	ctx := context.Background()
 	_, newHash := makeFoldersFromHash(hash, "", 5)
-	wc := gsw.bucket.Object(newHash).NewWriter(ctx)
+	wc := gsw.bucket.Object(prefix + newHash).NewWriter(ctx)
 	defer wc.Close()
 	if _, err := wc.Write(buf); err != nil {
 		return err
@@ -62,10 +62,10 @@ func (gsw *GoogleStorageDriver) Write(buf []byte, hash string) error {
 }
 
 // NewReader produces a handler for file in google storage
-func (gsw *GoogleStorageDriver) NewReader(hash string) (io.ReadCloser, error) {
+func (gsw *GoogleStorageDriver) NewReader(hash string, prefix string) (io.ReadCloser, error) {
 	ctx := context.Background()
 	_, newHash := makeFoldersFromHash(hash, "", 5)
-	rc, err := gsw.bucket.Object(newHash).NewReader(ctx)
+	rc, err := gsw.bucket.Object(prefix + newHash).NewReader(ctx)
 	if err != nil {
 		raven.CaptureError(err, nil) // it's called in a goroutine
 		return nil, err

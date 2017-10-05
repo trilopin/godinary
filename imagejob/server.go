@@ -85,7 +85,6 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 		<-GlobalThrotling
 
 		if err != nil {
-			raven.CaptureErrorAndWait(err, nil)
 			http.Error(w, "Not Found", http.StatusNotFound)
 			return
 		}

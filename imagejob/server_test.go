@@ -87,6 +87,29 @@ func TestFetch(t *testing.T) {
 	}
 }
 
+func TestFetchWithoutAcceptHeader(t *testing.T) {
+	setupModule()
+	defer os.RemoveAll("/tmp/.godinary")
+
+	test := fetchCases[0]
+	req, _ := http.NewRequest(test.method, test.url, nil)
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(Fetch)
+	handler.ServeHTTP(rr, req)
+
+	assert.Equal(t, test.status, rr.Code, test.message)
+
+	if test.status == 200 {
+		buffer, err := ioutil.ReadAll(rr.Body)
+		assert.Nil(t, err)
+		img := bimg.NewImage(buffer)
+		size, _ := img.Size()
+		assert.Equal(t, 141, size.Height, "height")
+		assert.Equal(t, 100, size.Width, "width")
+	}
+
+}
+
 var topDomainCases = []struct {
 	url    string
 	domain string

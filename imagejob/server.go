@@ -41,7 +41,8 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 	urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
 	job := NewImageJob()
-	job.AcceptWebp = strings.Contains(r.Header["Accept"][0], "image/webp")
+	acceptheader, ok := r.Header["Accept"]
+	job.AcceptWebp = ok && strings.Contains(acceptheader[0], "image/webp")
 
 	if err := job.Parse(urlInfo); err != nil {
 		raven.CaptureErrorAndWait(err, nil)

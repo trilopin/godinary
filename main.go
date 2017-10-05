@@ -56,6 +56,8 @@ func setupConfig() {
 func init() {
 
 	setupConfig()
+	Port = viper.GetString("port")
+	SSLDir = viper.GetString("ssl_dir")
 
 	if viper.GetString("sentry_url") != "" {
 		raven.SetDSN(viper.GetString("sentry_url"))
@@ -66,9 +68,6 @@ func init() {
 			// do all of the scary things here
 		}, nil)
 	}
-
-	Port = viper.GetString("port")
-	SSLDir = viper.GetString("ssl_dir")
 
 	AllowedReferers = strings.Split(viper.GetString("allow_hosts"), ",")
 
@@ -108,7 +107,7 @@ func main() {
 	err := server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
 	if err != nil {
 		raven.CaptureError(err, nil)
-		log.Fatal("ListenAndServe: ", err)
+		log.Fatal("ListenAndServe cannot start: ", err)
 	}
 }
 

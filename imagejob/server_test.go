@@ -2,6 +2,7 @@ package imagejob
 
 import (
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -53,7 +54,7 @@ var fetchCases = []struct {
 }
 
 func setupModule() {
-
+	log.SetOutput(ioutil.Discard)
 	viper.Set("fs_base", "/tmp/.godinary/")
 	storage.StorageDriver = storage.NewFileDriver()
 	MaxRequest = 2
@@ -83,5 +84,25 @@ func TestFetch(t *testing.T) {
 			assert.Equal(t, 141, size.Height, "height")
 			assert.Equal(t, 100, size.Width, "width")
 		}
+	}
+}
+
+var topDomainCases = []struct {
+	url    string
+	domain string
+	err    error
+}{
+	{
+		"http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg",
+		"upload.wikimedia.org",
+		nil,
+	},
+}
+
+func testTopDomain(t *testing.T) {
+	for _, test := range topDomainCases {
+		domain, err := topDomain(test.url)
+		assert.Equal(t, domain, test.domain)
+		assert.Equal(t, err, test.err)
 	}
 }

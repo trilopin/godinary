@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -87,8 +86,6 @@ func (img *Image) Process(source Image, sd storage.Driver) error {
 	}
 
 	if img.RawContent, err = source.Content.Process(options); err != nil {
-		log.Println(err)
-		log.Println(img.Format)
 		return errors.New("Can't process image")
 	}
 	if sd != nil {

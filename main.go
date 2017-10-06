@@ -98,6 +98,10 @@ func main() {
 
 	mux = map[string]func(http.ResponseWriter, *http.Request){
 		"/image/fetch/": raven.RecoveryHandler(imagejob.Fetch),
+		"/robots.txt": func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(w, "User-Agent: *")
+			fmt.Fprintln(w, "Disallow: /")
+		},
 		"/up": func(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "up")
 		},

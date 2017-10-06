@@ -64,8 +64,11 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	if reader, err = storage.StorageDriver.NewReader(job.Target.Hash, "derived/"); err == nil {
 		defer reader.Close()
 		if cached, err2 := ioutil.ReadAll(reader); err2 == nil {
-			writeImage(w, cached, job.Target.Format)
-			log.Printf("CACHED - TOTAL %0.5f", time.Since(t1).Seconds())
+			if err = writeImage(w, cached, job.Target.Format); err == nil {
+				log.Printf("CACHED - TOTAL %0.5f", time.Since(t1).Seconds())
+			} else {
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			}
 			return
 		}
 	}
@@ -102,11 +105,14 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 	}
 	t3 := time.Now()
 
-	writeImage(w, job.Target.RawContent, job.Target.Format)
-	log.Printf(
-		"NEW - TOTAL %0.5f => SEM %0.5f, DOWN %0.5f, PROC %0.5f",
-		time.Since(t1).Seconds(), dSem,
-		t2.Sub(t1).Seconds()-dSem, t3.Sub(t2).Seconds())
+	if err = writeImage(w, job.Target.RawContent, job.Target.Format); err == nil {
+		log.Printf(
+			"NEW - TOTAL %0.5f => SEM %0.5f, DOWN %0.5f, PROC %0.5f",
+			time.Since(t1).Seconds(), dSem,
+			t2.Sub(t1).Seconds()-dSem, t3.Sub(t2).Seconds())
+	} else {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
 
 }
 
@@ -118,9 +124,15 @@ func topDomain(URL string) (string, error) {
 	return info.Host, nil
 }
 
-func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) {
+func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) error {
 	w.Header().Set("Cache-Control", "public, max-age="+viper.GetString("cdn_ttl"))
 	w.Header().Set("Content-Length", strconv.Itoa(len(buffer)))
 	w.Header().Set("Content-Type", fmt.Sprintf("image/%s", bimg.ImageTypes[format]))
-	w.Write(buffer)
+	_, err := w.Write(buffer)
+
+	if err != nil {
+		log.Println("Error writing response ", err)
+		raven.CaptureErrorAndWait(err, nil)
+	}
+	return err
 }

@@ -58,7 +58,7 @@ func (img *Image) Download(sd storage.Driver) error {
 	if sd != nil {
 		body, _ := ioutil.ReadAll(resp.Body)
 		img.Content = bimg.NewImage(body)
-		go sd.Write(body, img.Hash)
+		go sd.Write(body, img.Hash, "source/")
 	}
 	return nil
 }
@@ -89,7 +89,7 @@ func (img *Image) Process(source Image, sd storage.Driver) error {
 		return errors.New("Can't process image")
 	}
 	if sd != nil {
-		go sd.Write(img.RawContent, img.Hash)
+		go sd.Write(img.RawContent, img.Hash, "derived/")
 	}
 	return nil
 }

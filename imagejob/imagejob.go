@@ -33,10 +33,6 @@ func (job *ImageJob) Parse(fetchData string) error {
 	var offset int
 	var err error
 
-	ht := sha256.New()
-	ht.Write([]byte(fetchData))
-	job.Target.Hash = hex.EncodeToString(ht.Sum(nil))
-
 	parts := strings.SplitN(fetchData, "/", 2)
 	if parts[0] != "http:" {
 		filters := strings.Split(parts[0], ",")
@@ -93,6 +89,10 @@ func (job *ImageJob) Parse(fetchData string) error {
 		offset = len(parts[0]) + 1
 	}
 	job.Source.URL, _ = url.QueryUnescape(fetchData[offset:])
+
+	ht := sha256.New()
+	ht.Write([]byte(fetchData + string(job.Target.Format)))
+	job.Target.Hash = hex.EncodeToString(ht.Sum(nil))
 
 	hs := sha256.New()
 	hs.Write([]byte(job.Source.URL))

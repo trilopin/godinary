@@ -3,7 +3,6 @@ package storage
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/spf13/viper"
@@ -27,7 +26,6 @@ func NewFileDriver() *FileDriver {
 // Write in filesystem a bytearray
 func (fs *FileDriver) Write(buf []byte, hash string, prefix string) error {
 	dir, newHash := makeFoldersFromHash(hash, fs.base+prefix, 3)
-	log.Println("writer", dir, newHash)
 	err := os.MkdirAll(dir, 0744)
 	if err != nil {
 		return err

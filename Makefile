@@ -18,8 +18,7 @@ test-docker-image:
 	docker run -p 3002:3002 --env-file .env --entrypoint sh -ti godinary:latest
 
 run:
-	docker run -p 3002:3002 --env-file .env \
-	       -v $$PWD/data/:/data/ \
-		   -v $$PWD/server.key:/app/server.key \
-		   -v $$PWD/server.pem:/app/server.pem \
-		   -ti godinary:latest
+	docker run -p 3000:3000 --env-file .env \
+	       -v $$PWD/:/go/src/github.com/trilopin/godinary/ \
+		   -ti godinary:dev \
+		   /bin/bash  -c "gin -i -appPort 3002 run main.go"

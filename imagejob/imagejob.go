@@ -105,7 +105,6 @@ func (job *ImageJob) Parse(fetchData string) error {
 func (job *ImageJob) crop() error {
 
 	// reset dimensions
-
 	switch job.Filters["crop"] {
 	// Preserve aspect ratio, bigger dimension is selected
 	case "fit":

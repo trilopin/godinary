@@ -86,7 +86,7 @@ func (img *Image) Process(source Image, sd storage.Driver) error {
 	}
 
 	if img.RawContent, err = source.Content.Process(options); err != nil {
-		return errors.New("Can't process image")
+		return err
 	}
 	if sd != nil {
 		go sd.Write(img.RawContent, img.Hash, "derived/")

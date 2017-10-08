@@ -20,9 +20,6 @@ import (
 // Port exposed by http server
 var Port string
 
-// SSLDir is the directory containing server.pem and server.key files
-var SSLDir string
-
 // AllowedReferers is the list of hosts allowed to request images
 var AllowedReferers []string
 
@@ -33,7 +30,7 @@ func setupConfig() {
 	flag.String("release", "", "Release hash to notify sentry")
 	flag.String("allow_hosts", "", "Domains authorized to ask godinary separated by commas (A comma at the end allows empty referers)")
 	flag.String("port", "3002", "Port where the https server listen")
-	flag.String("ssl_dir", "/app/", "Path to directory with server.key and server.pem SSL files")
+	flag.String("ssl_dir", "", "Path to directory with server.key and server.pem SSL files")
 	flag.Int("max_request", 100, "Maximum number of simultaneous downloads")
 	flag.Int("max_request_domain", 10, "Maximum number of simultaneous downloads per domain")
 	flag.String("cdn_ttl", "604800", "Number of seconds images wil be cached in CDN")
@@ -58,7 +55,6 @@ func init() {
 
 	setupConfig()
 	Port = viper.GetString("port")
-	SSLDir = viper.GetString("ssl_dir")
 
 	if viper.GetString("sentry_url") != "" {
 		raven.SetDSN(viper.GetString("sentry_url"))
@@ -92,6 +88,8 @@ func init() {
 var mux map[string]func(http.ResponseWriter, *http.Request)
 
 func main() {
+	var err error
+
 	server := http.Server{
 		Addr:    ":" + Port,
 		Handler: &myHandler{},
@@ -109,7 +107,11 @@ func main() {
 	}
 
 	fmt.Println("Listening with SSL on port", Port)
-	err := server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
+	if SSLDir := viper.GetString("ssl_dir"); SSLDir == "" {
+		err = server.ListenAndServe()
+	} else {
+		err = server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
+	}
 	if err != nil {
 		raven.CaptureError(err, nil)
 		log.Fatal("ListenAndServe cannot start: ", err)

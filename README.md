@@ -2,39 +2,44 @@
 Image proxy with live resize &amp; tranformations
 
 
-Install
+### Install
 ```
 git clone https://github.com/trilopin/godinary
 ```
 
 
-
-Docker flow:
+### Docker flow:
 - make build -> compiles and build docker image
 - make run -> start server
 
-Development flow:
+### Development flow:
 - glide install
 - GODINARY_FS_BASE=data GODINARY_ALLOW_HOSTS=<host>, GODINARY_SSL_DIR=./ go run main.go
 - GODINARY_GS_CREDENTIALS=<credential>.json GODINARY_ALLOW_HOSTS=<host>, GODINARY_SSL_DIR=./ GODINARY_STORAGE=gs GODINARY_GCE_PROJECT=<gce project> GODINARY_GS_BUCKET=<gce bucket>  go run main.go
 
-Configuration (via env vars)
+### Configuration
+Variables can be passed as arguments or as env vars (uppercase and with GODINARY_ prefix)
 ```
-- GODINARY_MAX_REQUEST: number of concurrent external requests (default 20)
-- GODINARY_PORT: http server port (default 3002)
-- GODINARY_ALLOW_HOSTS: list of referer hostnames allowed (blank is allways allowed)
-- GODINARY_STORAGE: gs for google storage and fs for filesystem (default: "fs")
-- GODINARY_FS_BASE: base dir for filesystem storage
-- GODINARY_SENTRY_URL: sentry dsn for error tracking (default: "")
-- GODINARY_RELEASE: commit hash for this release, used with sentry (default: "")
-- GODINARY_SSL_DIR: SSL certs directory (default: "/app/")
-- GODINARY_GS_PROJECT: GCE project for Google Storage
-- GODINARY_GS_BUCKET: Bucket name in Google storage
-- GODINARY_GS_CREDENTIALS: service account json file for Google storage
+$ godinary -h
+Usage of godinary:
+      --allow_hosts string       Domains authorized to ask godinary separated by commas (A comma at the end allows empty referers)
+      --cdn_ttl string           Number of seconds images wil be cached in CDN (default "604800")
+      --domain string            Domain to validate with Host header, it will deny any other request (if port is not standard must be passed as host:port)
+      --fs_base string           FS option: Base dir for filesystem storage
+      --gce_project string       GS option: Sentry DSN for error tracking
+      --gs_bucket string         GS option: Bucket name
+      --gs_credentials string    GS option: Path to service account file with Google Storage credentials
+      --max_request int          Maximum number of simultaneous downloads (default 100)
+      --max_request_domain int   Maximum number of simultaneous downloads per domain (default 10)
+      --port string              Port where the https server listen (default "3002")
+      --release string           Release hash to notify sentry
+      --sentry_url string        Sentry DSN for error tracking
+      --ssl_dir string           Path to directory with server.key and server.pem SSL files (default "/app/")
+      --storage string           Storage type: 'gs' for google storage or 'fs' for filesystem (default "fs")
 ```
 
 
-Use it
+### Use it
 ```
 http://localhost:3002/image/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
 ```
@@ -47,6 +52,6 @@ Parameters:
 - f: format (jpg, jpeg, png, gif, webp and auto allowed)
 - q: quality (75 by default)
 
-TODO:
+### TODO
 - rate limiting
 - log & better error handling

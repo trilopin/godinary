@@ -28,6 +28,7 @@ var AllowedReferers []string
 
 func setupConfig() {
 	// flags setup
+	flag.String("domain", "", "Domain to validate with Host header, it will deny any other request (if port is not standard must be passed as host:port)")
 	flag.String("sentry_url", "", "Sentry DSN for error tracking")
 	flag.String("release", "", "Release hash to notify sentry")
 	flag.String("allow_hosts", "", "Domains authorized to ask godinary separated by commas (A comma at the end allows empty referers)")
@@ -130,6 +131,12 @@ func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	)
 
 	httpReferer = r.Header.Get("Referer")
+	domain := viper.GetString("domain")
+	if domain != "" && r.Host != domain {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
 	if httpReferer != "" {
 		info, _ := url.Parse(httpReferer)
 		for _, domain := range AllowedReferers {

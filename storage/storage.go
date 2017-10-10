@@ -5,11 +5,6 @@ import (
 	"io"
 )
 
-var (
-	// StorageDriver is global struct for persistence driver
-	StorageDriver Driver
-)
-
 // Driver is the interface for saving images
 type Driver interface {
 	Write(buf []byte, hash string, prefix string) error

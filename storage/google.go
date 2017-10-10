@@ -3,8 +3,6 @@ package storage
 import (
 	"io"
 
-	"github.com/spf13/viper"
-
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 
@@ -18,28 +16,18 @@ type GoogleStorageDriver struct {
 }
 
 // NewGoogleStorageDriver constructs new GoogleStorageDriver
-func NewGoogleStorageDriver() *GoogleStorageDriver {
+func NewGoogleStorageDriver(project string, bucket string, credentials string) *GoogleStorageDriver {
 	var gsw GoogleStorageDriver
 	var err error
 	var client *gs.Client
 
-	gceProject := viper.GetString("gce_project")
-	if gceProject == "" {
-		panic("GODINARY_GCE_PROJECT should be setted")
-	}
-
-	gsw.bucketName = viper.GetString("gs_bucket")
-	if gsw.bucketName == "" {
-		panic("GODINARY_GS_BUCKET should be setted")
-	}
-
-	serviceAccount := viper.GetString("gs_credentials")
+	gsw.bucketName = bucket
 
 	ctx := context.Background()
-	if serviceAccount == "" {
+	if credentials == "" {
 		client, err = gs.NewClient(ctx)
 	} else {
-		client, err = gs.NewClient(ctx, option.WithServiceAccountFile(serviceAccount))
+		client, err = gs.NewClient(ctx, option.WithServiceAccountFile(credentials))
 	}
 	if err != nil {
 		panic("error in gstorage")
@@ -48,7 +36,7 @@ func NewGoogleStorageDriver() *GoogleStorageDriver {
 	return &gsw
 }
 
-// Write in filesystem a bytearray
+// Write in Google storage a bytearray
 func (gsw *GoogleStorageDriver) Write(buf []byte, hash string, prefix string) error {
 	ctx := context.Background()
 	_, newHash := makeFoldersFromHash(hash, prefix, 5)

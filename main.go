@@ -57,12 +57,6 @@ func init() {
 		}, nil)
 	}
 
-	if viper.GetString("storage") == "gs" {
-		storage.StorageDriver = storage.NewGoogleStorageDriver()
-	} else {
-		storage.StorageDriver = storage.NewFileDriver()
-	}
-
 	log.SetOutput(os.Stdout)
 }
 
@@ -75,6 +69,28 @@ func main() {
 		AllowedReferers:     strings.Split(viper.GetString("allow_hosts"), ","),
 		MaxRequest:          viper.GetInt("max_request"),
 		MaxRequestPerDomain: viper.GetInt("max_request_domain"),
+	}
+
+	if viper.GetString("storage") == "gs" {
+		opts.GCEProject = viper.GetString("gce_project")
+		if opts.GCEProject == "" {
+			panic("GODINARY_GCE_PROJECT should be setted")
+		}
+		opts.GSBucket = viper.GetString("gs_bucket")
+		if opts.GSBucket == "" {
+			panic("GODINARY_GS_BUCKET should be setted")
+		}
+		opts.GSCredencials = viper.GetString("gs_credentials")
+		if opts.GSCredencials == "" {
+			panic("GODINARY_GS_CREDENTIUALS shold be setted")
+		}
+		opts.StorageDriver = storage.NewGoogleStorageDriver(opts.GCEProject, opts.GSBucket, opts.GSCredencials)
+	} else {
+		opts.FSBase = viper.GetString("fs_base")
+		if opts.FSBase == "" {
+			panic("GODINARY_FS_BASE should be setted")
+		}
+		opts.StorageDriver = storage.NewFileDriver(opts.FSBase)
 	}
 
 	// semaphores control concurrent http client requests

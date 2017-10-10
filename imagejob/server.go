@@ -31,6 +31,11 @@ type ServerOpts struct {
 	Port                string
 	Domain              string
 	AllowedReferers     []string
+	StorageDriver       storage.Driver
+	FSBase              string
+	GCEProject          string
+	GSBucket            string
+	GSCredencials       string
 }
 
 // RobotsTXT return robots.txt valid for complete disallow
@@ -79,7 +84,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// derived image is already cached
-		if reader, err = storage.StorageDriver.NewReader(job.Target.Hash, "derived/"); err == nil {
+		if reader, err = opts.StorageDriver.NewReader(job.Target.Hash, "derived/"); err == nil {
 			defer reader.Close()
 			if cached, err2 := ioutil.ReadAll(reader); err2 == nil {
 				if err = writeImage(w, cached, job.Target.Format); err == nil {
@@ -92,7 +97,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		}
 
 		// Download if original image does not exists at storage, load otherwise
-		reader, err = storage.StorageDriver.NewReader(job.Source.Hash, "source/")
+		reader, err = opts.StorageDriver.NewReader(job.Source.Hash, "source/")
 		if err == nil {
 			defer reader.Close()
 			job.Source.Load(reader)
@@ -102,7 +107,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 			GlobalThrotling <- struct{}{}
 			SpecificThrotling[domain] <- struct{}{}
 			dSem = time.Since(tSem).Seconds()
-			err = job.Source.Download(storage.StorageDriver)
+			err = job.Source.Download(opts.StorageDriver)
 			<-SpecificThrotling[domain]
 			<-GlobalThrotling
 
@@ -117,7 +122,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		job.crop()
 
 		// do the process thing
-		if err := job.Target.Process(job.Source, storage.StorageDriver); err != nil {
+		if err := job.Target.Process(job.Source, opts.StorageDriver); err != nil {
 			log.Println("Error processing image ", job.Source.URL, err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}

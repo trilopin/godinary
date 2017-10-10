@@ -4,8 +4,6 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-
-	"github.com/spf13/viper"
 )
 
 // FileDriver struct
@@ -14,12 +12,9 @@ type FileDriver struct {
 }
 
 // NewFileDriver constructs new FileDriver with base path
-func NewFileDriver() *FileDriver {
+func NewFileDriver(base string) *FileDriver {
 	var fs FileDriver
-	fs.base = viper.GetString("fs_base")
-	if fs.base == "" {
-		panic("GODINARY_FS_BASE should be setted")
-	}
+	fs.base = base
 	return &fs
 }
 

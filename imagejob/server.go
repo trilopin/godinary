@@ -38,6 +38,123 @@ type ServerOpts struct {
 	GSCredencials       string
 }
 
+// ------------------------------------
+//             Main Server
+// ------------------------------------
+
+// Serve is the main func for start http server
+func Serve(opts *ServerOpts) {
+	var err error
+
+	// semaphores control concurrent http client requests
+	SpecificThrotling = make(map[string]chan struct{}, 20)
+	GlobalThrotling = make(chan struct{}, opts.MaxRequest)
+
+	mux := &Mux{
+		Routes: make(map[string]func(http.ResponseWriter, *http.Request)),
+	}
+	mux.Handle("/robots.txt", Middleware(RobotsTXT, opts))
+	mux.Handle("/up", Middleware(Up, opts))
+	mux.Handle("/image/fetch/", Middleware(Fetch(opts), opts))
+	server := http.Server{
+		Addr:    ":" + opts.Port,
+		Handler: mux,
+	}
+
+	if SSLDir := viper.GetString("ssl_dir"); SSLDir == "" {
+		fmt.Println("Listening on port", opts.Port)
+		err = server.ListenAndServe()
+	} else {
+		fmt.Println("Listening with SSL on port", opts.Port)
+		err = server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
+	}
+
+	if err != nil {
+		log.Fatal("ListenAndServe cannot start: ", err)
+		raven.CaptureError(err, nil)
+	}
+}
+
+// ------------------------------------
+//             Mux
+// ------------------------------------
+
+// Mux is the custom Router needed in order to avoid URL cleaning
+type Mux struct {
+	Routes map[string]func(http.ResponseWriter, *http.Request)
+}
+
+// Handle adds new route with their handler
+func (mux *Mux) Handle(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+	mux.Routes[route] = handler
+}
+
+// ServeHTTP manage custom url multiplexing avoiding path.clean in
+// default go http mux.
+func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for key, h := range mux.Routes {
+		if strings.Index(r.URL.String(), key) == 0 {
+			h(w, r)
+		}
+	}
+}
+
+// ------------------------------------
+//             Middlewares
+// ------------------------------------
+
+// Middleware composes all middlewares
+func Middleware(handler func(w http.ResponseWriter, r *http.Request), opts *ServerOpts) http.HandlerFunc {
+	return raven.RecoveryHandler(logger(domainValidator(opts.Domain, refererValidator(opts.AllowedReferers, handler))))
+}
+
+// domainValidator is a middleware to check Host Header against configured domain
+func domainValidator(domain string, next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if domain != "" && r.Host != domain {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// logger is a middleware which writes to standard output time and urls
+func logger(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		log.Println(time.Since(start), r.URL.Path)
+	})
+}
+
+//refererValidator is a middleware to check Http-referer headers
+func refererValidator(allowedReferers []string, next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		allowed := false
+		httpReferer := r.Header.Get("Referer")
+		if httpReferer != "" {
+			info, _ := url.Parse(httpReferer)
+			for _, domain := range allowedReferers {
+				if domain != "" && strings.HasSuffix(info.Host, domain) {
+					allowed = true
+					break
+				}
+			}
+
+			if !allowed {
+				http.Error(w, "Referer not allowed", http.StatusForbidden)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// ------------------------------------
+//             Views
+// ------------------------------------
+
 // RobotsTXT return robots.txt valid for complete disallow
 func RobotsTXT(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "User-Agent: *")

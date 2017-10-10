@@ -10,8 +10,26 @@ import (
 	raven "github.com/getsentry/raven-go"
 )
 
-func Middleware(domain string, allowedReferers []string, handler func(w http.ResponseWriter, r *http.Request)) http.HandlerFunc {
-	return raven.RecoveryHandler(logger(domainValidator(domain, refererValidator(allowedReferers, handler))))
+type Mux struct {
+	Routes map[string]func(http.ResponseWriter, *http.Request)
+}
+
+func (mux *Mux) Handle(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+	mux.Routes[route] = handler
+}
+
+// ServeHTTP manage custom url multiplexing avoiding path.clean in
+// default go http mux.
+func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for key, h := range mux.Routes {
+		if strings.Index(r.URL.String(), key) == 0 {
+			h(w, r)
+		}
+	}
+}
+
+func Middleware(handler func(w http.ResponseWriter, r *http.Request), opts *ServerOpts) http.HandlerFunc {
+	return raven.RecoveryHandler(logger(domainValidator(opts.Domain, refererValidator(opts.AllowedReferers, handler))))
 }
 
 // domainValidator is a middleware to check Host Header against configured domain

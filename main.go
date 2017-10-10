@@ -63,56 +63,40 @@ func init() {
 		storage.StorageDriver = storage.NewFileDriver()
 	}
 
-	imagejob.MaxRequest = viper.GetInt("max_request")
-	imagejob.MaxRequestPerDomain = viper.GetInt("max_request_domain")
-
-	// globalSemaphore controls concurrent http client requests
-	imagejob.SpecificThrotling = make(map[string]chan struct{}, 20)
-	imagejob.GlobalThrotling = make(chan struct{}, imagejob.MaxRequest)
-
 	log.SetOutput(os.Stdout)
-}
-
-type Mux struct {
-	Routes map[string]func(http.ResponseWriter, *http.Request)
-}
-
-func (mux *Mux) Handle(route string, handler func(w http.ResponseWriter, r *http.Request)) {
-	mux.Routes[route] = handler
-}
-
-// ServeHTTP manage custom url multiplexing avoiding path.clean in
-// default go http mux.
-func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	for key, h := range mux.Routes {
-		if strings.Index(r.URL.String(), key) == 0 {
-			h(w, r)
-		}
-	}
 }
 
 func main() {
 	var err error
 
-	port := viper.GetString("port")
-	domain := viper.GetString("domain")
-	allowedReferers := strings.Split(viper.GetString("allow_hosts"), ",")
-	mux := &Mux{
+	opts := &imagejob.ServerOpts{
+		Port:                viper.GetString("port"),
+		Domain:              viper.GetString("domain"),
+		AllowedReferers:     strings.Split(viper.GetString("allow_hosts"), ","),
+		MaxRequest:          viper.GetInt("max_request"),
+		MaxRequestPerDomain: viper.GetInt("max_request_domain"),
+	}
+
+	// semaphores control concurrent http client requests
+	imagejob.SpecificThrotling = make(map[string]chan struct{}, 20)
+	imagejob.GlobalThrotling = make(chan struct{}, opts.MaxRequest)
+
+	mux := &imagejob.Mux{
 		Routes: make(map[string]func(http.ResponseWriter, *http.Request)),
 	}
-	mux.Handle("/robots.txt", imagejob.Middleware(domain, allowedReferers, imagejob.RobotsTXT))
-	mux.Handle("/up", imagejob.Middleware(domain, allowedReferers, imagejob.Up))
-	mux.Handle("/image/fetch/", imagejob.Middleware(domain, allowedReferers, imagejob.Fetch))
+	mux.Handle("/robots.txt", imagejob.Middleware(imagejob.RobotsTXT, opts))
+	mux.Handle("/up", imagejob.Middleware(imagejob.Up, opts))
+	mux.Handle("/image/fetch/", imagejob.Middleware(imagejob.Fetch(opts), opts))
 	server := http.Server{
-		Addr:    ":" + port,
+		Addr:    ":" + opts.Port,
 		Handler: mux,
 	}
 
 	if SSLDir := viper.GetString("ssl_dir"); SSLDir == "" {
-		fmt.Println("Listening on port", port)
+		fmt.Println("Listening on port", opts.Port)
 		err = server.ListenAndServe()
 	} else {
-		fmt.Println("Listening with SSL on port", port)
+		fmt.Println("Listening with SSL on port", opts.Port)
 		err = server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
 	}
 

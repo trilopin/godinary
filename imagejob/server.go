@@ -13,6 +13,7 @@ import (
 	"time"
 
 	raven "github.com/getsentry/raven-go"
+	"github.com/trilopin/godinary/storage"
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 

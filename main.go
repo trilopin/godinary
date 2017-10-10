@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
-	"sort"
 	"strings"
 
 	raven "github.com/getsentry/raven-go"
@@ -16,12 +14,6 @@ import (
 	"github.com/trilopin/godinary/imagejob"
 	"github.com/trilopin/godinary/storage"
 )
-
-// Port exposed by http server
-var Port string
-
-// AllowedReferers is the list of hosts allowed to request images
-var AllowedReferers []string
 
 func setupConfig() {
 	// flags setup
@@ -54,7 +46,6 @@ func setupConfig() {
 func init() {
 
 	setupConfig()
-	Port = viper.GetString("port")
 
 	if viper.GetString("sentry_url") != "" {
 		raven.SetDSN(viper.GetString("sentry_url"))
@@ -65,8 +56,6 @@ func init() {
 			// do all of the scary things here
 		}, nil)
 	}
-
-	AllowedReferers = strings.Split(viper.GetString("allow_hosts"), ",")
 
 	if viper.GetString("storage") == "gs" {
 		storage.StorageDriver = storage.NewGoogleStorageDriver()
@@ -81,82 +70,54 @@ func init() {
 	imagejob.SpecificThrotling = make(map[string]chan struct{}, 20)
 	imagejob.GlobalThrotling = make(chan struct{}, imagejob.MaxRequest)
 
-	sort.Strings(AllowedReferers)
 	log.SetOutput(os.Stdout)
 }
 
-var mux map[string]func(http.ResponseWriter, *http.Request)
+type Mux struct {
+	Routes map[string]func(http.ResponseWriter, *http.Request)
+}
+
+func (mux *Mux) Handle(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+	mux.Routes[route] = handler
+}
+
+// ServeHTTP manage custom url multiplexing avoiding path.clean in
+// default go http mux.
+func (mux *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	for key, h := range mux.Routes {
+		if strings.Index(r.URL.String(), key) == 0 {
+			h(w, r)
+		}
+	}
+}
 
 func main() {
 	var err error
 
+	port := viper.GetString("port")
+	domain := viper.GetString("domain")
+	allowedReferers := strings.Split(viper.GetString("allow_hosts"), ",")
+	mux := &Mux{
+		Routes: make(map[string]func(http.ResponseWriter, *http.Request)),
+	}
+	mux.Handle("/robots.txt", imagejob.Middleware(domain, allowedReferers, imagejob.RobotsTXT))
+	mux.Handle("/up", imagejob.Middleware(domain, allowedReferers, imagejob.Up))
+	mux.Handle("/image/fetch/", imagejob.Middleware(domain, allowedReferers, imagejob.Fetch))
 	server := http.Server{
-		Addr:    ":" + Port,
-		Handler: &myHandler{},
+		Addr:    ":" + port,
+		Handler: mux,
 	}
 
-	mux = map[string]func(http.ResponseWriter, *http.Request){
-		"/image/fetch/": raven.RecoveryHandler(imagejob.Fetch),
-		"/robots.txt": func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, "User-Agent: *")
-			fmt.Fprintln(w, "Disallow: /")
-		},
-		"/up": func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, "up")
-		},
-	}
-
-	fmt.Println("Listening with SSL on port", Port)
 	if SSLDir := viper.GetString("ssl_dir"); SSLDir == "" {
+		fmt.Println("Listening on port", port)
 		err = server.ListenAndServe()
 	} else {
+		fmt.Println("Listening with SSL on port", port)
 		err = server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
 	}
+
 	if err != nil {
-		raven.CaptureError(err, nil)
 		log.Fatal("ListenAndServe cannot start: ", err)
-	}
-}
-
-type myHandler struct{}
-
-// ServeHTTP manage custom url multiplexing avoiding path.clean in
-// default go http mux.
-func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Manage authorization by http Referer
-	// List of authorized referers should provisioned via GODINARY_ALLOW_HOSTS
-	// environment variable. Empty referer is always allowed because
-	// development issues
-	var (
-		allowed     bool
-		httpReferer string
-	)
-
-	httpReferer = r.Header.Get("Referer")
-	domain := viper.GetString("domain")
-	if domain != "" && r.Host != domain {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	if httpReferer != "" {
-		info, _ := url.Parse(httpReferer)
-		for _, domain := range AllowedReferers {
-			if domain != "" && strings.HasSuffix(info.Host, domain) {
-				allowed = true
-				break
-			}
-		}
-
-		if !allowed {
-			http.Error(w, "Referer not allowed", http.StatusForbidden)
-			return
-		}
-	}
-	// Manage route is is allowed
-	for key, h := range mux {
-		if strings.Index(r.URL.String(), key) == 0 {
-			h(w, r)
-		}
+		raven.CaptureError(err, nil)
 	}
 }

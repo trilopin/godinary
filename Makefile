@@ -21,4 +21,4 @@ run:
 	docker run -p 3000:3000 --env-file .env \
 	       -v $$PWD/:/go/src/github.com/trilopin/godinary/ \
 		   -ti godinary:dev \
-		   /bin/bash  -c "gin -i -appPort 3002 run main.go"
+		   /bin/bash -c "gin -i -appPort 3002 run main.go"

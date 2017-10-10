@@ -29,6 +29,17 @@ var (
 	GlobalThrotling chan struct{}
 )
 
+// RobotsTXT return robots.txt valid for complete disallow
+func RobotsTXT(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "User-Agent: *")
+	fmt.Fprintln(w, "Disallow: /")
+}
+
+// RobotsTXT return robots.txt valid for complete disallow
+func Up(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintln(w, "up")
+}
+
 // Fetch takes url + params in url to download image from url and apply filters
 func Fetch(w http.ResponseWriter, r *http.Request) {
 	var reader io.ReadCloser
@@ -52,7 +63,9 @@ func Fetch(w http.ResponseWriter, r *http.Request) {
 
 	domain, err := topDomain(job.Source.URL)
 	if err != nil || domain == "" {
-		raven.CaptureErrorAndWait(err, nil)
+		if err != nil {
+			raven.CaptureErrorAndWait(err, nil)
+		}
 		http.Error(w, "Cannot parse domain", http.StatusInternalServerError)
 		return
 	}

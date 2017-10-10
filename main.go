@@ -65,6 +65,8 @@ func main() {
 		AllowedReferers:     strings.Split(viper.GetString("allow_hosts"), ","),
 		MaxRequest:          viper.GetInt("max_request"),
 		MaxRequestPerDomain: viper.GetInt("max_request_domain"),
+		SSLDir:              viper.GetString("ssl_dir"),
+		CDNTTL:              viper.GetString("cdn_ttl"),
 	}
 
 	if viper.GetString("storage") == "gs" {

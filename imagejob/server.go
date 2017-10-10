@@ -13,8 +13,6 @@ import (
 	"time"
 
 	raven "github.com/getsentry/raven-go"
-	"github.com/spf13/viper"
-	"github.com/trilopin/godinary/storage"
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
@@ -30,6 +28,8 @@ type ServerOpts struct {
 	MaxRequestPerDomain int
 	Port                string
 	Domain              string
+	SSLDir              string
+	CDNTTL              string
 	AllowedReferers     []string
 	StorageDriver       storage.Driver
 	FSBase              string
@@ -61,12 +61,12 @@ func Serve(opts *ServerOpts) {
 		Handler: mux,
 	}
 
-	if SSLDir := viper.GetString("ssl_dir"); SSLDir == "" {
+	if opts.SSLDir == "" {
 		fmt.Println("Listening on port", opts.Port)
 		err = server.ListenAndServe()
 	} else {
 		fmt.Println("Listening with SSL on port", opts.Port)
-		err = server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
+		err = server.ListenAndServeTLS(opts.SSLDir+"server.pem", opts.SSLDir+"server.key")
 	}
 
 	if err != nil {
@@ -204,7 +204,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		if reader, err = opts.StorageDriver.NewReader(job.Target.Hash, "derived/"); err == nil {
 			defer reader.Close()
 			if cached, err2 := ioutil.ReadAll(reader); err2 == nil {
-				if err = writeImage(w, cached, job.Target.Format); err == nil {
+				if err = writeImage(w, cached, job.Target.Format, opts); err == nil {
 					log.Printf("CACHED - TOTAL %0.5f", time.Since(t1).Seconds())
 				} else {
 					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -245,7 +245,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		}
 		t3 := time.Now()
 
-		if err = writeImage(w, job.Target.RawContent, job.Target.Format); err == nil {
+		if err = writeImage(w, job.Target.RawContent, job.Target.Format, opts); err == nil {
 			log.Printf(
 				"NEW - TOTAL %0.5f => SEM %0.5f, DOWN %0.5f, PROC %0.5f",
 				time.Since(t1).Seconds(), dSem,
@@ -265,8 +265,8 @@ func topDomain(URL string) (string, error) {
 	return info.Host, nil
 }
 
-func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType) error {
-	w.Header().Set("Cache-Control", "public, max-age="+viper.GetString("cdn_ttl"))
+func writeImage(w http.ResponseWriter, buffer []byte, format bimg.ImageType, opts *ServerOpts) error {
+	w.Header().Set("Cache-Control", "public, max-age="+opts.CDNTTL)
 	w.Header().Set("Content-Length", strconv.Itoa(len(buffer)))
 	w.Header().Set("Content-Type", fmt.Sprintf("image/%s", bimg.ImageTypes[format]))
 	_, err := w.Write(buffer)

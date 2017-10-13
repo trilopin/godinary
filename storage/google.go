@@ -54,7 +54,6 @@ func (gsw *GoogleStorageDriver) NewReader(hash string, prefix string) (io.ReadCl
 	_, newHash := makeFoldersFromHash(hash, prefix, 5)
 	rc, err := gsw.bucket.Object(newHash).NewReader(ctx)
 	if err != nil {
-		// raven.CaptureError(err, nil) // it's called in a goroutine
 		return nil, err
 	}
 	return rc, nil

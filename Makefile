@@ -8,6 +8,9 @@ build-test:
 build:
 	docker build -t godinary:latest .
 
+build-dev:
+	docker build -t godinary:dev -f Dockerfile.dev .
+
 test:
 	go test --cover github.com/trilopin/godinary/imagejob github.com/trilopin/godinary/storage
 

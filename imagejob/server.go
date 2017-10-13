@@ -63,10 +63,10 @@ func Serve(opts *ServerOpts) {
 	}
 
 	if opts.SSLDir == "" {
-		fmt.Println("Listening on port", opts.Port)
+		log.Println("Listening on port", opts.Port)
 		err = server.ListenAndServe()
 	} else {
-		fmt.Println("Listening with SSL on port", opts.Port)
+		log.Println("Listening with SSL on port", opts.Port)
 		err = server.ListenAndServeTLS(opts.SSLDir+"server.pem", opts.SSLDir+"server.key")
 	}
 

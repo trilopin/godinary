@@ -14,7 +14,6 @@ func TestNewFileDriver(t *testing.T) {
 	assert.Equal(t, fw.base, "base")
 }
 
-// TODO: replace this fixed jpeso route
 func TestWrite(t *testing.T) {
 	buf := []byte("CONTENT")
 	fw := NewFileDriver("/tmp/.godtmp/")

@@ -2,17 +2,14 @@ package imagejob
 
 import (
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 
-	bimg "gopkg.in/h2non/bimg.v1"
-
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"github.com/trilopin/godinary/storage"
+	bimg "gopkg.in/h2non/bimg.v1"
 )
 
 var fetchCases = []struct {
@@ -53,25 +50,29 @@ var fetchCases = []struct {
 	},
 }
 
-func setupModule() {
-	log.SetOutput(ioutil.Discard)
-	viper.Set("fs_base", "/tmp/.godinary/")
-	storage.StorageDriver = storage.NewFileDriver()
-	MaxRequest = 2
-	MaxRequestPerDomain = 1
-	SpecificThrotling = make(map[string]chan struct{}, MaxRequestPerDomain)
-	GlobalThrotling = make(chan struct{}, MaxRequest)
+func setupModule() *ServerOpts {
+	//log.SetOutput(ioutil.Discard)
+	opts := &ServerOpts{
+		MaxRequest:          2,
+		MaxRequestPerDomain: 1,
+		FSBase:              "/tmp/.godinary/",
+		CDNTTL:              "1",
+	}
+	SpecificThrotling = make(map[string]chan struct{}, opts.MaxRequestPerDomain)
+	GlobalThrotling = make(chan struct{}, opts.MaxRequest)
+	opts.StorageDriver = storage.NewFileDriver(opts.FSBase)
+	return opts
 }
 
 func TestFetch(t *testing.T) {
-	setupModule()
-	defer os.RemoveAll("/tmp/.godinary")
+	opts := setupModule()
+	defer os.RemoveAll(opts.FSBase)
 
 	for _, test := range fetchCases {
 		req, _ := http.NewRequest(test.method, test.url, nil)
 		req.Header.Set("Accept", "image/webp")
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(Fetch)
+		handler := http.HandlerFunc(Fetch(opts))
 		handler.ServeHTTP(rr, req)
 
 		assert.Equal(t, test.status, rr.Code, test.message)
@@ -88,13 +89,13 @@ func TestFetch(t *testing.T) {
 }
 
 func TestFetchWithoutAcceptHeader(t *testing.T) {
-	setupModule()
-	defer os.RemoveAll("/tmp/.godinary")
+	opts := setupModule()
+	defer os.RemoveAll(opts.FSBase)
 
 	test := fetchCases[0]
 	req, _ := http.NewRequest(test.method, test.url, nil)
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(Fetch)
+	handler := http.HandlerFunc(Fetch(opts))
 	handler.ServeHTTP(rr, req)
 
 	assert.Equal(t, test.status, rr.Code, test.message)

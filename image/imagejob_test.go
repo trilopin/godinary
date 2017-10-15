@@ -1,4 +1,4 @@
-package imagejob
+package image
 
 import (
 	"errors"
@@ -244,7 +244,7 @@ func TestCrop(t *testing.T) {
 		job.Target.Height = test.targetHeight
 		job.Filters["crop"] = test.crop
 
-		err := job.crop()
+		err := job.Crop()
 		assert.Nil(t, err)
 		assert.Equal(t, test.expectedHeight, job.Target.Height, test.message)
 		assert.Equal(t, test.expectedWidth, job.Target.Width, test.message)

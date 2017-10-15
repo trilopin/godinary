@@ -1,4 +1,4 @@
-package imagejob
+package http
 
 import (
 	"errors"
@@ -13,6 +13,7 @@ import (
 	"time"
 
 	raven "github.com/getsentry/raven-go"
+	"github.com/trilopin/godinary/image"
 	"github.com/trilopin/godinary/storage"
 	bimg "gopkg.in/h2non/bimg.v1"
 )
@@ -24,6 +25,7 @@ var (
 	GlobalThrotling chan struct{}
 )
 
+// ServerOpts contains confif for Application
 type ServerOpts struct {
 	MaxRequest          int
 	MaxRequestPerDomain int
@@ -179,7 +181,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
-		job := NewImageJob()
+		job := image.NewImageJob()
 		acceptHeader, ok := r.Header["Accept"]
 		job.AcceptWebp = ok && strings.Contains(acceptHeader[0], "image/webp")
 
@@ -189,7 +191,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		domain, err := topDomain(job.Source.URL)
+		domain, err := domainFromURL(job.Source.URL)
 		if err != nil || domain == "" {
 			if err != nil {
 				raven.CaptureErrorAndWait(err, nil)
@@ -237,7 +239,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		t2 := time.Now()
 
 		job.Source.ExtractInfo()
-		job.crop()
+		job.Crop()
 
 		// do the process thing
 		if err := job.Target.Process(job.Source, opts.StorageDriver); err != nil {
@@ -258,7 +260,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 
 }
 
-func topDomain(URL string) (string, error) {
+func domainFromURL(URL string) (string, error) {
 	info, err := url.Parse(URL)
 	if err != nil {
 		return "", errors.New("Cannot parse hostname")

@@ -1,4 +1,4 @@
-package imagejob
+package http
 
 import (
 	"io/ioutil"
@@ -123,9 +123,9 @@ var topDomainCases = []struct {
 	},
 }
 
-func testTopDomain(t *testing.T) {
+func testDomainFromURL(t *testing.T) {
 	for _, test := range topDomainCases {
-		domain, err := topDomain(test.url)
+		domain, err := domainFromURL(test.url)
 		assert.Equal(t, domain, test.domain)
 		assert.Equal(t, err, test.err)
 	}

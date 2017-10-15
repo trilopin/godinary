@@ -1,4 +1,4 @@
-package imagejob
+package image
 
 import (
 	"crypto/sha256"
@@ -101,8 +101,8 @@ func (job *ImageJob) Parse(fetchData string) error {
 	return nil
 }
 
-// crop calculates the best strategy to crop the image
-func (job *ImageJob) crop() error {
+// Crop calculates the best strategy to crop the image
+func (job *ImageJob) Crop() error {
 
 	// reset dimensions
 	switch job.Filters["crop"] {

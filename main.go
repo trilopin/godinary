@@ -9,7 +9,7 @@ import (
 	raven "github.com/getsentry/raven-go"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/trilopin/godinary/imagejob"
+	"github.com/trilopin/godinary/http"
 	"github.com/trilopin/godinary/storage"
 )
 
@@ -61,7 +61,7 @@ func init() {
 func main() {
 	var err error
 
-	opts := &imagejob.ServerOpts{
+	opts := &http.ServerOpts{
 		Port:                viper.GetString("port"),
 		Domain:              viper.GetString("domain"),
 		AllowedReferers:     strings.Split(viper.GetString("allow_hosts"), ","),
@@ -97,5 +97,5 @@ func main() {
 		opts.StorageDriver = storage.NewFileDriver(opts.FSBase)
 	}
 
-	imagejob.Serve(opts)
+	http.Serve(opts)
 }

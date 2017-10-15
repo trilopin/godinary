@@ -1,4 +1,4 @@
-package imagejob
+package image
 
 import (
 	"errors"
@@ -20,12 +20,12 @@ var testFiles = map[string]string{
 
 var parserCases = []struct {
 	url         string
-	expected    ImageJob
+	expected    Job
 	description string
 }{
 	{
 		testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -40,7 +40,7 @@ var parserCases = []struct {
 	},
 	{
 		"w_400/" + testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -56,7 +56,7 @@ var parserCases = []struct {
 	},
 	{
 		"w_400,c_limit,h_600,f_jpg/" + testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -73,7 +73,7 @@ var parserCases = []struct {
 	},
 	{
 		"w_400,c_limit,h_600,f_webp,q_50/" + testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -91,7 +91,7 @@ var parserCases = []struct {
 	},
 	{
 		"w_400,c_limit,h_600,f_auto,q_65/" + testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -109,7 +109,7 @@ var parserCases = []struct {
 	},
 	{
 		"w_400,c_limit,h_600,f_png/" + testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -126,7 +126,7 @@ var parserCases = []struct {
 	},
 	{
 		"w_400,c_limit,h_600,f_gif/" + testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -143,7 +143,7 @@ var parserCases = []struct {
 	},
 	{
 		"w_400,c_limit,h_600,f_jpeg/" + testURL,
-		ImageJob{
+		Job{
 			Source: Image{
 				URL:  testURL,
 				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
@@ -162,7 +162,7 @@ var parserCases = []struct {
 
 func TestParse(t *testing.T) {
 	for _, test := range parserCases {
-		job := NewImageJob()
+		job := NewJob()
 		err := job.Parse(test.url)
 		assert.Nil(t, err)
 		assert.Equal(t, test.expected, *job, test.description)
@@ -203,7 +203,7 @@ var parserErrorCases = []struct {
 
 func TestParseFail(t *testing.T) {
 	for _, test := range parserErrorCases {
-		img := NewImageJob()
+		img := NewJob()
 		err := img.Parse(test.url)
 		assert.Equal(t, test.err, err, test.description)
 	}
@@ -236,7 +236,7 @@ var cropCases = []struct {
 
 func TestCrop(t *testing.T) {
 	for _, test := range cropCases {
-		job := NewImageJob()
+		job := NewJob()
 		job.Source.Width = test.sourceWidth
 		job.Source.Height = test.sourceHeight
 		job.Source.AspectRatio = float32(test.sourceWidth) / float32(test.sourceHeight)
@@ -244,7 +244,7 @@ func TestCrop(t *testing.T) {
 		job.Target.Height = test.targetHeight
 		job.Filters["crop"] = test.crop
 
-		err := job.crop()
+		err := job.Crop()
 		assert.Nil(t, err)
 		assert.Equal(t, test.expectedHeight, job.Target.Height, test.message)
 		assert.Equal(t, test.expectedWidth, job.Target.Width, test.message)

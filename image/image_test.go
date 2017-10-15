@@ -1,4 +1,4 @@
-package imagejob
+package image
 
 import (
 	"errors"

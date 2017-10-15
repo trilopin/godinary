@@ -5,23 +5,18 @@ import (
 	"os"
 	"testing"
 
-	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNewFileDriver(t *testing.T) {
-	viper.Set("fs_base", "base")
-	fw := NewFileDriver()
+	fw := NewFileDriver("base")
 	assert.NotNil(t, fw)
 	assert.Equal(t, fw.base, "base")
-	viper.Set("fs_base", "")
 }
 
-// TODO: replace this fixed jpeso route
 func TestWrite(t *testing.T) {
 	buf := []byte("CONTENT")
-	viper.Set("fs_base", "/tmp/.godtmp/")
-	fw := NewFileDriver()
+	fw := NewFileDriver("/tmp/.godtmp/")
 	err := fw.Write(buf, "aabbccddee", "")
 	assert.Nil(t, err)
 
@@ -29,5 +24,18 @@ func TestWrite(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "CONTENT", string(buf))
 	os.RemoveAll("/tmp/.godtmp/")
+}
 
+// func TestWriteFail(t *testing.T) {
+// 	buf := []byte("CONTENT")
+// 	fw := NewFileDriver("/root/")
+// 	err := fw.Write(buf, "aabbccddee", "")
+// 	assert.NotNil(t, err)
+// }
+
+func TestNewReader(t *testing.T) {
+	fw := NewFileDriver("/fakedir/")
+	r, err := fw.NewReader("aabbccddee", "/tmp/")
+	assert.Equal(t, err.Error(), "open /fakedir//tmp/aa/bb/cc/aabbccddee: no such file or directory")
+	assert.Nil(t, r)
 }

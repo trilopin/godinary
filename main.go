@@ -2,12 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"net/http"
-	"net/url"
 	"os"
-	"sort"
 	"strings"
 
 	raven "github.com/getsentry/raven-go"
@@ -16,12 +12,6 @@ import (
 	"github.com/trilopin/godinary/imagejob"
 	"github.com/trilopin/godinary/storage"
 )
-
-// Port exposed by http server
-var Port string
-
-// AllowedReferers is the list of hosts allowed to request images
-var AllowedReferers []string
 
 func setupConfig() {
 	// flags setup
@@ -54,7 +44,6 @@ func setupConfig() {
 func init() {
 
 	setupConfig()
-	Port = viper.GetString("port")
 
 	if viper.GetString("sentry_url") != "" {
 		raven.SetDSN(viper.GetString("sentry_url"))
@@ -66,97 +55,47 @@ func init() {
 		}, nil)
 	}
 
-	AllowedReferers = strings.Split(viper.GetString("allow_hosts"), ",")
-
-	if viper.GetString("storage") == "gs" {
-		storage.StorageDriver = storage.NewGoogleStorageDriver()
-	} else {
-		storage.StorageDriver = storage.NewFileDriver()
-	}
-
-	imagejob.MaxRequest = viper.GetInt("max_request")
-	imagejob.MaxRequestPerDomain = viper.GetInt("max_request_domain")
-
-	// globalSemaphore controls concurrent http client requests
-	imagejob.SpecificThrotling = make(map[string]chan struct{}, 20)
-	imagejob.GlobalThrotling = make(chan struct{}, imagejob.MaxRequest)
-
-	sort.Strings(AllowedReferers)
 	log.SetOutput(os.Stdout)
 }
-
-var mux map[string]func(http.ResponseWriter, *http.Request)
 
 func main() {
 	var err error
 
-	server := http.Server{
-		Addr:    ":" + Port,
-		Handler: &myHandler{},
+	opts := &imagejob.ServerOpts{
+		Port:                viper.GetString("port"),
+		Domain:              viper.GetString("domain"),
+		AllowedReferers:     strings.Split(viper.GetString("allow_hosts"), ","),
+		MaxRequest:          viper.GetInt("max_request"),
+		MaxRequestPerDomain: viper.GetInt("max_request_domain"),
+		SSLDir:              viper.GetString("ssl_dir"),
+		CDNTTL:              viper.GetString("cdn_ttl"),
 	}
 
-	mux = map[string]func(http.ResponseWriter, *http.Request){
-		"/image/fetch/": raven.RecoveryHandler(imagejob.Fetch),
-		"/robots.txt": func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(w, "User-Agent: *")
-			fmt.Fprintln(w, "Disallow: /")
-		},
-		"/up": func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintf(w, "up")
-		},
-	}
+	if viper.GetString("storage") == "gs" {
+		opts.GCEProject = viper.GetString("gce_project")
+		opts.GSBucket = viper.GetString("gs_bucket")
+		opts.GSCredencials = viper.GetString("gs_credentials")
+		if opts.GCEProject == "" {
+			log.Fatalln("GoogleStorage project should be setted")
+		}
+		if opts.GSBucket == "" {
+			log.Fatalln("GoogleStorage bucket should be setted")
+		}
+		if opts.GSCredencials == "" {
+			log.Fatalln("GoogleStorage Credentials shold be setted")
+		}
 
-	fmt.Println("Listening with SSL on port", Port)
-	if SSLDir := viper.GetString("ssl_dir"); SSLDir == "" {
-		err = server.ListenAndServe()
+		opts.StorageDriver, err = storage.NewGoogleStorageDriver(opts.GCEProject, opts.GSBucket, opts.GSCredencials)
+		if err != nil {
+			log.Fatalln("Can not create GoogleStorage Driver")
+		}
 	} else {
-		err = server.ListenAndServeTLS(SSLDir+"server.pem", SSLDir+"server.key")
-	}
-	if err != nil {
-		raven.CaptureError(err, nil)
-		log.Fatal("ListenAndServe cannot start: ", err)
-	}
-}
-
-type myHandler struct{}
-
-// ServeHTTP manage custom url multiplexing avoiding path.clean in
-// default go http mux.
-func (*myHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Manage authorization by http Referer
-	// List of authorized referers should provisioned via GODINARY_ALLOW_HOSTS
-	// environment variable. Empty referer is always allowed because
-	// development issues
-	var (
-		allowed     bool
-		httpReferer string
-	)
-
-	httpReferer = r.Header.Get("Referer")
-	domain := viper.GetString("domain")
-	if domain != "" && r.Host != domain {
-		http.Error(w, "Not Found", http.StatusNotFound)
-		return
-	}
-
-	if httpReferer != "" {
-		info, _ := url.Parse(httpReferer)
-		for _, domain := range AllowedReferers {
-			if domain != "" && strings.HasSuffix(info.Host, domain) {
-				allowed = true
-				break
-			}
+		opts.FSBase = viper.GetString("fs_base")
+		if opts.FSBase == "" {
+			log.Fatalln("Filesystem base path should be setted")
 		}
+		opts.StorageDriver = storage.NewFileDriver(opts.FSBase)
+	}
 
-		if !allowed {
-			http.Error(w, "Referer not allowed", http.StatusForbidden)
-			return
-		}
-	}
-	// Manage route is is allowed
-	for key, h := range mux {
-		if strings.Index(r.URL.String(), key) == 0 {
-			h(w, r)
-		}
-	}
+	imagejob.Serve(opts)
 }

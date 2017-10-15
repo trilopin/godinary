@@ -8,6 +8,9 @@ build-test:
 build:
 	docker build -t godinary:latest .
 
+build-dev:
+	docker build -t godinary:dev -f Dockerfile.dev .
+
 test:
 	go test --cover github.com/trilopin/godinary/imagejob github.com/trilopin/godinary/storage
 
@@ -18,7 +21,6 @@ test-docker-image:
 	docker run -p 3002:3002 --env-file .env --entrypoint sh -ti godinary:latest
 
 run:
-	docker run -p 3000:3000 --env-file .env \
+	docker run --rm -p 3000:3000 --env-file .env \
 	       -v $$PWD/:/go/src/github.com/trilopin/godinary/ \
-		   -ti godinary:dev \
-		   /bin/bash  -c "gin -i -appPort 3002 run main.go"
+		   -ti godinary:dev

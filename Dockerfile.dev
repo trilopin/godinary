@@ -1,0 +1,12 @@
+FROM golang:1.8.3-stretch as builder
+ARG RUNTESTS=0
+# gcc for cgo
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    g++ wget gcc libc6-dev make pkg-config ca-certificates git curl \
+    libvips libvips-dev
+
+# setup go & glide
+RUN curl https://glide.sh/get | sh
+WORKDIR /go/src/github.com/trilopin/godinary/
+RUN go get github.com/codegangsta/gin
+CMD [ "/go/bin/gin", "-i", "-appPort", "3002", "run", "main.go" ]

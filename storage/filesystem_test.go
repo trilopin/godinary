@@ -24,5 +24,18 @@ func TestWrite(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "CONTENT", string(buf))
 	os.RemoveAll("/tmp/.godtmp/")
+}
 
+func TestWriteFail(t *testing.T) {
+	buf := []byte("CONTENT")
+	fw := NewFileDriver("/fakedir/")
+	err := fw.Write(buf, "aabbccddee", "")
+	assert.NotNil(t, err)
+}
+
+func TestNewReader(t *testing.T) {
+	fw := NewFileDriver("/fakedir/")
+	r, err := fw.NewReader("aabbccddee", "/tmp/")
+	assert.Equal(t, err.Error(), "open /fakedir//tmp/aa/bb/cc/aabbccddee: no such file or directory")
+	assert.Nil(t, r)
 }

@@ -11,17 +11,17 @@ import (
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
-// ImageJob manages image transformation
-type ImageJob struct {
+// Job manages image transformation
+type Job struct {
 	Source     Image
 	Target     Image
 	Filters    map[string]string
 	AcceptWebp bool
 }
 
-// NewImageJob constructs a default empty struct and return a pointer to it
-func NewImageJob() *ImageJob {
-	var job ImageJob
+// NewJob constructs a default empty struct and return a pointer to it
+func NewJob() *Job {
+	var job Job
 	job.Filters = make(map[string]string)
 	job.Filters["crop"] = "scale"
 	job.Target.Format = bimg.JPEG
@@ -29,7 +29,7 @@ func NewImageJob() *ImageJob {
 }
 
 // Parse creates a Job struct from string
-func (job *ImageJob) Parse(fetchData string) error {
+func (job *Job) Parse(fetchData string) error {
 	var offset int
 	var err error
 
@@ -102,7 +102,7 @@ func (job *ImageJob) Parse(fetchData string) error {
 }
 
 // Crop calculates the best strategy to crop the image
-func (job *ImageJob) Crop() error {
+func (job *Job) Crop() error {
 
 	// reset dimensions
 	switch job.Filters["crop"] {

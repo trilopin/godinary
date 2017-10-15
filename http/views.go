@@ -40,7 +40,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 		urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
-		job := image.NewImageJob()
+		job := image.NewJob()
 		acceptHeader, ok := r.Header["Accept"]
 		job.AcceptWebp = ok && strings.Contains(acceptHeader[0], "image/webp")
 

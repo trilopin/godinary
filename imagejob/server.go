@@ -71,7 +71,7 @@ func Serve(opts *ServerOpts) {
 	}
 
 	if err != nil {
-		log.Fatal("ListenAndServe cannot start: ", err)
+		log.Fatalln("ListenAndServe cannot start: ", err)
 		raven.CaptureError(err, nil)
 	}
 }

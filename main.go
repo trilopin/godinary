@@ -59,6 +59,8 @@ func init() {
 }
 
 func main() {
+	var err error
+
 	opts := &imagejob.ServerOpts{
 		Port:                viper.GetString("port"),
 		Domain:              viper.GetString("domain"),
@@ -71,22 +73,26 @@ func main() {
 
 	if viper.GetString("storage") == "gs" {
 		opts.GCEProject = viper.GetString("gce_project")
-		if opts.GCEProject == "" {
-			panic("GODINARY_GCE_PROJECT should be setted")
-		}
 		opts.GSBucket = viper.GetString("gs_bucket")
-		if opts.GSBucket == "" {
-			panic("GODINARY_GS_BUCKET should be setted")
-		}
 		opts.GSCredencials = viper.GetString("gs_credentials")
-		if opts.GSCredencials == "" {
-			panic("GODINARY_GS_CREDENTIUALS shold be setted")
+		if opts.GCEProject == "" {
+			log.Fatalln("GoogleStorage project should be setted")
 		}
-		opts.StorageDriver = storage.NewGoogleStorageDriver(opts.GCEProject, opts.GSBucket, opts.GSCredencials)
+		if opts.GSBucket == "" {
+			log.Fatalln("GoogleStorage bucket should be setted")
+		}
+		if opts.GSCredencials == "" {
+			log.Fatalln("GoogleStorage Credentials shold be setted")
+		}
+
+		opts.StorageDriver, err = storage.NewGoogleStorageDriver(opts.GCEProject, opts.GSBucket, opts.GSCredencials)
+		if err != nil {
+			log.Fatalln("Can not create GoogleStorage Driver")
+		}
 	} else {
 		opts.FSBase = viper.GetString("fs_base")
 		if opts.FSBase == "" {
-			panic("GODINARY_FS_BASE should be setted")
+			log.Fatalln("Filesystem base path should be setted")
 		}
 		opts.StorageDriver = storage.NewFileDriver(opts.FSBase)
 	}

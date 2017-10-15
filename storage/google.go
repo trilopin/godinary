@@ -16,7 +16,7 @@ type GoogleStorageDriver struct {
 }
 
 // NewGoogleStorageDriver constructs new GoogleStorageDriver
-func NewGoogleStorageDriver(project string, bucket string, credentials string) *GoogleStorageDriver {
+func NewGoogleStorageDriver(project string, bucket string, credentials string) (*GoogleStorageDriver, error) {
 	var gsw GoogleStorageDriver
 	var err error
 	var client *gs.Client
@@ -30,10 +30,10 @@ func NewGoogleStorageDriver(project string, bucket string, credentials string) *
 		client, err = gs.NewClient(ctx, option.WithServiceAccountFile(credentials))
 	}
 	if err != nil {
-		panic("error in gstorage")
+		return nil, err
 	}
 	gsw.bucket = client.Bucket(gsw.bucketName)
-	return &gsw
+	return &gsw, nil
 }
 
 // Write in Google storage a bytearray

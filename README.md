@@ -2,20 +2,24 @@
 Image proxy with live resize &amp; tranformations
 
 
-### Install
+Install
 ```
 git clone https://github.com/trilopin/godinary
 ```
 
 
 ### Docker flow:
-- make build -> compiles and build docker image
-- make run -> start server
+- make build
+- docker run --rm -p 3002:3002 --env-file .env -ti godinary:latest
 
 ### Development flow:
+Without SSl and with gin live reloading in port 3000:
 - mkdir data && cp .env.example .env
 - make build-dev
-- make run
+- make run 
+
+### Run tests
+- make build-test
 
 ### Configuration
 Variables can be passed as arguments or as env vars (uppercase and with GODINARY_ prefix)
@@ -41,7 +45,7 @@ Usage of godinary:
 
 ### Use it
 ```
-http://localhost:3002/image/fetch/w_500/https%3A%2F%2Fphotos.roomorama-cache.com%2Fphotos%2Frooms%2F3001686%2F3001686_gallery.jpg
+http://localhost:3002/image/fetch/w_500/https://www.drupal.org/files/project-images/simplemeta2.png
 ```
 
 Parameters:
@@ -52,6 +56,4 @@ Parameters:
 - f: format (jpg, jpeg, png, gif, webp and auto allowed)
 - q: quality (75 by default)
 
-### TODO
-- rate limiting
-- log & better error handling
+

@@ -13,9 +13,9 @@ git clone https://github.com/trilopin/godinary
 - make run -> start server
 
 ### Development flow:
-- glide install
-- GODINARY_FS_BASE=data GODINARY_ALLOW_HOSTS=<host>, GODINARY_SSL_DIR=./ go run main.go
-- GODINARY_GS_CREDENTIALS=<credential>.json GODINARY_ALLOW_HOSTS=<host>, GODINARY_SSL_DIR=./ GODINARY_STORAGE=gs GODINARY_GCE_PROJECT=<gce project> GODINARY_GS_BUCKET=<gce bucket>  go run main.go
+- mkdir data && cp .env.example .env
+- make build-dev
+- make run
 
 ### Configuration
 Variables can be passed as arguments or as env vars (uppercase and with GODINARY_ prefix)

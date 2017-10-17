@@ -62,7 +62,7 @@ func (job *Job) Parse(fetchData string) error {
 					job.Target.Format = bimg.WEBP
 				case "auto":
 					if job.AcceptWebp {
-						job.Target.Format = bimg.WEBP
+						job.Target.Format = bimg.JPEG // WEBP disabled
 					} else {
 						job.Target.Format = bimg.JPEG
 					}

@@ -102,7 +102,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 
 		// do the process thing
 		if err := job.Target.Process(job.Source, opts.StorageDriver); err != nil {
-			log.Println("Error processing image ", job.Source.URL, err)
+			log.Printf("Error processing image %s, %v", job.Source.URL, err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 		t3 := time.Now()

@@ -2,6 +2,7 @@ package image
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	bimg "gopkg.in/h2non/bimg.v1"
@@ -176,27 +177,27 @@ var parserErrorCases = []struct {
 }{
 	{
 		"w_400,c_limit,h_600,f_fake/" + testURL,
-		errors.New("Format not allowed"),
+		fmt.Errorf("format \"fake\" not allowed"),
 		"Bad image format",
 	},
 	{
 		"w_400,c_limit,h_pp/" + testURL,
-		errors.New("TargetHeight is not integer"),
+		fmt.Errorf("targetHeight is not integer: strconv.Atoi: parsing \"pp\": invalid syntax"),
 		"TargetHeight is not integer",
 	},
 	{
 		"w_OOO,c_limit,h_500/" + testURL,
-		errors.New("TargetWidth is not integer"),
+		fmt.Errorf("targetWidth is not integer: strconv.Atoi: parsing \"OOO\": invalid syntax"),
 		"TargetWidth is not integer",
 	},
 	{
 		"w_100,c_fake,h_500/" + testURL,
-		errors.New("Crop not allowed"),
+		errors.New("crop \"fake\" not allowed"),
 		"Crop is not allowed",
 	},
 	{
 		"w_100,c_limit,h_500,q_fake/" + testURL,
-		errors.New("Quality is not integer"),
+		fmt.Errorf("quality is not integer: strconv.Atoi: parsing \"fake\": invalid syntax"),
 		"Quality is not an integer",
 	},
 }

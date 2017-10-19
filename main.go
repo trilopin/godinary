@@ -87,12 +87,12 @@ func main() {
 
 		opts.StorageDriver, err = storage.NewGoogleStorageDriver(opts.GCEProject, opts.GSBucket, opts.GSCredencials)
 		if err != nil {
-			log.Fatalln("Can not create GoogleStorage Driver")
+			log.Fatalf("can not create GoogleStorage Driver: %v", err)
 		}
 	} else {
 		opts.FSBase = viper.GetString("fs_base")
 		if opts.FSBase == "" {
-			log.Fatalln("Filesystem base path should be setted")
+			log.Fatalln("filesystem base path should be setted: %v", err)
 		}
 		opts.StorageDriver = storage.NewFileDriver(opts.FSBase)
 	}

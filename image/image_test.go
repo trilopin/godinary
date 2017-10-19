@@ -1,7 +1,7 @@
 package image
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"testing"
 
@@ -33,7 +33,7 @@ func TestExtractInfoFail(t *testing.T) {
 	r, _ := os.Open("testdata/corrupted-image.jpg.jpg")
 	img.Load(r)
 	err := img.ExtractInfo()
-	assert.Equal(t, err, errors.New("Can't extract dimensions"))
+	assert.Equal(t, err, fmt.Errorf("can't extract dimensions: Unsupported image format"))
 
 }
 
@@ -46,13 +46,13 @@ func TestDownload(t *testing.T) {
 func TestDownloadFailBecauseNoURL(t *testing.T) {
 	img := Image{}
 	err := img.Download(nil)
-	assert.Equal(t, err, errors.New("SourceURL not found in image"))
+	assert.Equal(t, err, fmt.Errorf("sourceURL not found in image"))
 }
 
 func TestDownloadFailBecauseBadURL(t *testing.T) {
 	img := Image{URL: "fake"}
 	err := img.Download(nil)
-	assert.Equal(t, err, errors.New("Cannot download image fake"))
+	assert.Equal(t, err, fmt.Errorf("cannot download image fake: Get fake: unsupported protocol scheme \"\""))
 }
 
 func TestProcess(t *testing.T) {

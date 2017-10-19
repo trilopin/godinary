@@ -1,7 +1,7 @@
 package image
 
 import (
-	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -47,12 +47,12 @@ func (img *Image) Download(sd storage.Driver) error {
 	}
 
 	if img.URL == "" {
-		return errors.New("SourceURL not found in image")
+		return fmt.Errorf("sourceURL not found in image")
 	}
 
 	resp, err := c.Get(img.URL)
 	if err != nil || resp.StatusCode >= 400 {
-		return errors.New("Cannot download image " + img.URL)
+		return fmt.Errorf("cannot download image %s: %v", img.URL, err)
 	}
 
 	if sd != nil {
@@ -67,7 +67,7 @@ func (img *Image) Download(sd storage.Driver) error {
 func (img *Image) ExtractInfo() error {
 	size, err := img.Content.Size()
 	if err != nil {
-		return errors.New("Can't extract dimensions")
+		return fmt.Errorf("can't extract dimensions: %v", err)
 	}
 	img.Height = size.Height
 	img.Width = size.Width

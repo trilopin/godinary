@@ -3,7 +3,7 @@ package image
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
+	"fmt"
 	"net/url"
 	"strconv"
 	"strings"
@@ -42,17 +42,17 @@ func (job *Job) Parse(fetchData string) error {
 			case "h":
 				job.Target.Height, err = strconv.Atoi(filter[1])
 				if err != nil {
-					return errors.New("TargetHeight is not integer")
+					return fmt.Errorf("targetHeight is not integer: %v", err)
 				}
 			case "w":
 				job.Target.Width, err = strconv.Atoi(filter[1])
 				if err != nil {
-					return errors.New("TargetWidth is not integer")
+					return fmt.Errorf("targetWidth is not integer: %v", err)
 				}
 			case "q":
 				job.Target.Quality, err = strconv.Atoi(filter[1])
 				if err != nil {
-					return errors.New("Quality is not integer")
+					return fmt.Errorf("quality is not integer: %v", err)
 				}
 			case "f":
 				switch filter[1] {
@@ -71,7 +71,7 @@ func (job *Job) Parse(fetchData string) error {
 				case "gif":
 					job.Target.Format = bimg.GIF
 				default:
-					return errors.New("Format not allowed")
+					return fmt.Errorf("format \"%s\" not allowed", filter[1])
 				}
 
 			case "c":
@@ -81,7 +81,7 @@ func (job *Job) Parse(fetchData string) error {
 					"scale": true,
 				}
 				if !allowed[filter[1]] {
-					return errors.New("Crop not allowed")
+					return fmt.Errorf("crop \"%s\" not allowed", filter[1])
 				}
 				job.Filters["crop"] = filter[1]
 			}

@@ -1,0 +1,73 @@
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+      project: {{ .Chart.Name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.deploy.replicaCount }}
+  strategy:
+    type: {{ .Values.deploy.rollout.strategy }}
+    rollingUpdate:
+      maxSurge: {{ .Values.deploy.rollout.maxUnavailable }}
+      maxUnavailable: {{ .Values.deploy.rollout.maxUnavailable }}
+  template:
+    metadata:
+      labels:
+        project: {{ .Chart.Name }}
+    spec:
+      restartPolicy: {{ .Values.deploy.restartPolicy }}
+      {{- if .Values.deploy.volumes }}
+      volumes:
+      {{- range $key, $value := .Values.deploy.volumes }}
+      - name: {{ $key }}
+        {{ $value.type }}:
+          {{- range $v_key, $v_value := $value.values }}
+          {{ $v_key }}: {{ $v_value }}
+          {{- end}}
+      {{- end }}
+      {{- end }}
+      containers:
+      - name: {{ .Chart.Name }}
+        ports:
+        - name: {{ .Chart.Name }}-port
+          containerPort: {{ .Values.service.internalPort }}
+        {{- if .Values.deploy.volumes }}
+        volumeMounts:
+          {{- range $key, $value := .Values.deploy.volumes }}
+          - name: {{ $key }}
+            readOnly: {{ $value.readOnly }}
+            mountPath: {{ $value.mountPath }}
+          {{- end }}
+        {{ end}}
+        image: "{{ .Values.deploy.image }}:{{ default (printf "v%s" .Chart.Version) .Values.deploy.imageVersion }}"
+        resources:
+          {{- range $key, $value := .Values.deploy.resources }}
+          {{ $key }}:
+            {{- range $v_key, $v_value := $value }}
+            {{ $v_key }}: {{ $v_value }}
+            {{- end}}
+          {{- end}}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.deploy.probe.path }}
+            port: {{ .Values.service.internalPort }}
+            scheme: {{ .Values.deploy.probe.scheme }}
+          timeoutSeconds: {{ .Values.deploy.probe.timeoutSeconds }}
+          initialDelaySeconds: {{ .Values.deploy.probe.initialDelaySeconds }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.deploy.probe.path }}
+            scheme: {{ .Values.deploy.probe.scheme }}
+            port: {{ .Values.service.internalPort }}
+          timeoutSeconds: {{ .Values.deploy.probe.timeoutSeconds }}
+        env:
+        - name: GODINARY_PORT
+          value: {{ .Values.service.internalPort | quote }}
+        {{- range $key, $value := .Values.deploy.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+
+

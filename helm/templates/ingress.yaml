@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: godinary
+  labels:
+      project: {{ .Chart.Name }}
+  {{- if .Values.service.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.ingress.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end}}
+  {{- end }}
+spec:
+  backend:
+    serviceName: {{ .Chart.Name }}
+    servicePort: {{ .Chart.Name }}-http

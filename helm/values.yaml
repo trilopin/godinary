@@ -1,0 +1,42 @@
+# Default values for godinary
+namespace: default
+deploy:
+  replicaCount: 1
+  restartPolicy: Always
+  rollout:
+    strategy: RollingUpdate
+    maxUnavailable: 1
+  image: trilopin/godinary
+  resources:
+    requests:
+      memory: 1Gi
+      cpu: 1
+    limits:
+      memory: 3.5Gi
+      cpu: 2
+  probe:
+    path: /up
+    scheme: HTTP
+    timeoutSeconds: 1
+    initialDelaySeconds: 5
+  env:
+    GOMAXPROCS: 2
+    GODINARY_ALLOW_HOSTS: example.com,
+    GODINARY_FS_BASE: /tmp/
+
+service:
+  type: NodePort
+  sessionAffinity: None
+  internalPort: 3002
+  frontalPort: 80
+  protocol: TCP
+
+ingress:
+  annotations:
+    kubernetes.io/ingress.allow-http: "true"
+
+hpa:
+  minReplicas: 1
+  maxReplicas: 8
+  resourceName: memory
+  resourceAverage: 2Gi

@@ -36,4 +36,4 @@ secrets.yml
 server.key
 server.pem
 data
-godinary
+bin

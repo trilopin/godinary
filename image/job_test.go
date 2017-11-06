@@ -164,13 +164,13 @@ var parserCases = []struct {
 		Job{
 			Source: Image{
 				URL:  "file.jpg",
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
+				Hash: "91a721b7244245b40e368346edc97c311439a0260e4d51f60023eb1bc86d7238",
 			},
 			Target: Image{
 				Width:  400,
 				Height: 600,
 				Format: bimg.JPEG,
-				Hash:   "962aa5597fbb18caabfacfee9a1b612ad478341d4e8a573682788b773d874a37",
+				Hash:   "4d083201587ff3b5b4d268253c5070b650d64051b646a29bc352ea57878eb41b",
 			},
 			Filters: map[string]string{"crop": "limit"},
 		},
@@ -181,11 +181,11 @@ var parserCases = []struct {
 		Job{
 			Source: Image{
 				URL:  "file.jpg",
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
+				Hash: "91a721b7244245b40e368346edc97c311439a0260e4d51f60023eb1bc86d7238",
 			},
 			Target: Image{
 				Format: bimg.JPEG,
-				Hash:   "962aa5597fbb18caabfacfee9a1b612ad478341d4e8a573682788b773d874a37",
+				Hash:   "79fba77d9b83b2a93091d8a50c51e98337ff9f500ada410aef0ed39ceb3b6aad",
 			},
 			Filters: map[string]string{"crop": "limit"},
 		},

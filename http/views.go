@@ -118,6 +118,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+// Upload handles the requests for uploaded images
 func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var reader io.ReadCloser

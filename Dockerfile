@@ -20,8 +20,7 @@ ENV SRC_DIR=/go/src/github.com/trilopin/godinary/
 COPY . /go/src/github.com/trilopin/godinary/
 RUN make get-deps
 RUN if [ "$RUNTESTS" = "1" ]; then make test; fi
-RUN for i in `ls cmd`; do go build -o bin/$i cmd/$i/$i.go; done
-
+RUN for i in cmd/*; do go build -o "bin/$(basename $i)" "$i/$(basename $i).go"; done
 #######################
 ## stage -> runner
 #######################

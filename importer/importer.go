@@ -15,27 +15,33 @@ import (
 	"github.com/trilopin/godinary/storage"
 )
 
+// Importer is the interface to implement to imretrieve and save images
 type Importer interface {
 	Import(sd storage.Driver)
 }
 
+// CloudinaryImporter is the element to import uploaded images from claoudinary
 type CloudinaryImporter struct {
 	UserSpace string
 	APIKey    string
 	APISecret string
 }
 
+// CloudinaryResult is the struct for json item unmarshalling
 type CloudinaryResult struct {
 	PublicID string `json:"public_id"`
 	Format   string `json:"format"`
 	URL      string `json:"url"`
 }
 
+// CloudinaryResponse is the struct for json response unmarshalling
 type CloudinaryResponse struct {
 	Resources  []CloudinaryResult `json:"resources"`
 	NextCursor string             `json:"next_cursor"`
 }
 
+// NewRequest creates a new HTTP Request preconfigured to retrieve images
+// from cloudinary. Take care about, pagination, userspace and auth
 func (ci *CloudinaryImporter) NewRequest(cursor string) (*http.Request, error) {
 	cURL, err := url.Parse(fmt.Sprintf("https://api.cloudinary.com/v1_1/%s/resources/search", ci.UserSpace))
 	if err != nil {
@@ -55,6 +61,8 @@ func (ci *CloudinaryImporter) NewRequest(cursor string) (*http.Request, error) {
 	return req, err
 }
 
+// Upload save the images from the collection URLs into storage
+// The hash is build based on filename
 func (cr *CloudinaryResponse) Upload(sd storage.Driver) {
 	var wg sync.WaitGroup
 	for _, r := range cr.Resources {
@@ -96,6 +104,8 @@ func (cr *CloudinaryResponse) Upload(sd storage.Driver) {
 
 }
 
+// Import browse all images in userspace and save them in storage
+// This function will be running until cloudinary returns empty next_cursor
 func (ci *CloudinaryImporter) Import(sd storage.Driver) error {
 	var cursor string
 	var err error

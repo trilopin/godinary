@@ -34,7 +34,7 @@ func (job *Job) Parse(fetchData string) error {
 	var err error
 
 	parts := strings.SplitN(fetchData, "/", 2)
-	if parts[0] != "http:" {
+	if len(parts) > 1 && parts[0] != "http:" {
 		filters := strings.Split(parts[0], ",")
 		for _, v := range filters {
 			filter := strings.Split(v, "_")

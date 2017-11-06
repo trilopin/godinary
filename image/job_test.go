@@ -159,6 +159,38 @@ var parserCases = []struct {
 		},
 		"with multiple filter jpeg",
 	},
+	{
+		"w_400,c_limit,h_600,f_jpeg/file.jpg",
+		Job{
+			Source: Image{
+				URL:  "file.jpg",
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
+			},
+			Target: Image{
+				Width:  400,
+				Height: 600,
+				Format: bimg.JPEG,
+				Hash:   "962aa5597fbb18caabfacfee9a1b612ad478341d4e8a573682788b773d874a37",
+			},
+			Filters: map[string]string{"crop": "limit"},
+		},
+		"plain uploaded file with multiple filter jpeg",
+	},
+	{
+		"file.jpg",
+		Job{
+			Source: Image{
+				URL:  "file.jpg",
+				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
+			},
+			Target: Image{
+				Format: bimg.JPEG,
+				Hash:   "962aa5597fbb18caabfacfee9a1b612ad478341d4e8a573682788b773d874a37",
+			},
+			Filters: map[string]string{"crop": "limit"},
+		},
+		"plain uploaded file without filters",
+	},
 }
 
 func TestParse(t *testing.T) {

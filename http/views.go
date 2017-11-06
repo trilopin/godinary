@@ -154,7 +154,6 @@ func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 
 		// Download if original image does not exists at storage, load otherwise
 		reader, err = opts.StorageDriver.NewReader(job.Source.Hash, "upload/")
-		fmt.Println(err)
 		if err == nil {
 			defer reader.Close()
 			job.Source.Load(reader)

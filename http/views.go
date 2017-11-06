@@ -116,7 +116,72 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	}
+}
 
+func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var reader io.ReadCloser
+		var err error
+
+		t1 := time.Now()
+		if r.Method != "GET" {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		urlInfo := strings.Replace(r.URL.Path, "/image/upload/", "", 1)
+		job := image.NewJob()
+		acceptHeader, ok := r.Header["Accept"]
+		job.AcceptWebp = ok && strings.Contains(acceptHeader[0], "image/webp")
+
+		if err := job.Parse(urlInfo); err != nil {
+			raven.CaptureErrorAndWait(err, nil)
+			http.Error(w, "Bad request", http.StatusBadRequest)
+			return
+		}
+
+		// derived image is already cached
+		if reader, err = opts.StorageDriver.NewReader(job.Target.Hash, "derived/"); err == nil {
+			defer reader.Close()
+			if cached, err2 := ioutil.ReadAll(reader); err2 == nil {
+				if err = writeImage(w, cached, job.Target.Format, opts); err == nil {
+					log.Printf("CACHED - TOTAL %0.5f", time.Since(t1).Seconds())
+				} else {
+					http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+				}
+				return
+			}
+		}
+
+		// Download if original image does not exists at storage, load otherwise
+		reader, err = opts.StorageDriver.NewReader(job.Source.Hash, "upload/")
+		fmt.Println(err)
+		if err == nil {
+			defer reader.Close()
+			job.Source.Load(reader)
+		} else {
+			http.Error(w, "Not Found", http.StatusNotFound)
+			return
+		}
+		t2 := time.Now()
+
+		job.Source.ExtractInfo()
+		job.Crop()
+
+		// do the process thing
+		if err := job.Target.Process(job.Source, opts.StorageDriver); err != nil {
+			log.Printf("Error processing image %s, %v", job.Source.URL, err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+		t3 := time.Now()
+
+		if err = writeImage(w, job.Target.RawContent, job.Target.Format, opts); err == nil {
+			log.Printf(
+				"NEW - TOTAL %0.5f =>  PROC %0.5f",
+				time.Since(t1).Seconds(), t3.Sub(t2).Seconds())
+		} else {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	}
 }
 
 func domainFromURL(URL string) (string, error) {

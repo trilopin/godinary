@@ -187,7 +187,7 @@ var parserCases = []struct {
 				Format: bimg.JPEG,
 				Hash:   "79fba77d9b83b2a93091d8a50c51e98337ff9f500ada410aef0ed39ceb3b6aad",
 			},
-			Filters: map[string]string{"crop": "limit"},
+			Filters: map[string]string{"crop": "scale"},
 		},
 		"plain uploaded file without filters",
 	},

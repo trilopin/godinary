@@ -82,7 +82,9 @@ func (cr *CloudinaryResponse) Upload(sd storage.Driver) {
 				log.Println("Failed to download", r.URL)
 				return
 			}
+			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
+
 			if err != nil {
 				log.Println("Failed to parse body", r.URL)
 				return
@@ -124,6 +126,7 @@ func (ci *CloudinaryImporter) Import(sd storage.Driver) error {
 		body, err := ioutil.ReadAll(resp.Body)
 		cd := &CloudinaryResponse{}
 		json.Unmarshal(body, cd)
+		resp.Body.Close()
 
 		cd.Upload(sd)
 		if cd.NextCursor != "" {

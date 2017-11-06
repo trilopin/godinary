@@ -20,9 +20,7 @@ ENV SRC_DIR=/go/src/github.com/trilopin/godinary/
 COPY . /go/src/github.com/trilopin/godinary/
 RUN make get-deps
 RUN if [ "$RUNTESTS" = "1" ]; then make test; fi
-RUN go build -o godinary
-
-
+RUN for i in cmd/*; do go build -o "bin/$(basename $i)" "$i/$(basename $i).go"; done
 #######################
 ## stage -> runner
 #######################
@@ -34,6 +32,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 RUN mkdir /app
 COPY --from=builder /usr/lib/x86_64-linux-gnu/ /usr/lib/x86_64-linux-gnu/
 COPY --from=builder /lib/ /lib/
-COPY --from=builder /go/src/github.com/trilopin/godinary/godinary /app/
+COPY --from=builder /go/src/github.com/trilopin/godinary/bin/ /app/
 ENTRYPOINT ["/app/godinary"]
 

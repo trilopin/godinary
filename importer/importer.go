@@ -126,6 +126,7 @@ func (ci *CloudinaryImporter) Import(sd storage.Driver) error {
 		body, err := ioutil.ReadAll(resp.Body)
 		cd := &CloudinaryResponse{}
 		json.Unmarshal(body, cd)
+		resp.Body.Close()
 
 		cd.Upload(sd)
 		if cd.NextCursor != "" {

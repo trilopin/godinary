@@ -52,6 +52,7 @@ func Serve(opts *ServerOpts) {
 	mux.Handle("/robots.txt", Middleware(RobotsTXT, opts))
 	mux.Handle("/up", Middleware(Up, opts))
 	mux.Handle("/image/fetch/", Middleware(Fetch(opts), opts))
+	mux.Handle("/image/upload/", Middleware(Upload(opts), opts))
 	server := http.Server{
 		Addr:    ":" + opts.Port,
 		Handler: mux,

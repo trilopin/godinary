@@ -118,6 +118,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	}
 }
 
+// Upload handles the requests for uploaded images
 func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var reader io.ReadCloser
@@ -154,7 +155,6 @@ func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 
 		// Download if original image does not exists at storage, load otherwise
 		reader, err = opts.StorageDriver.NewReader(job.Source.Hash, "upload/")
-		fmt.Println(err)
 		if err == nil {
 			defer reader.Close()
 			job.Source.Load(reader)

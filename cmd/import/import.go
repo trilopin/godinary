@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
+	"runtime/pprof"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -23,6 +25,8 @@ func setupConfig() {
 	flag.String("cloudinary_userspace", "", "Cloudinary User Space")
 	flag.String("cloudinary_apikey", "", "Cloudinary API Key")
 	flag.String("cloudinary_apisecret", "", "Cloudinary API Secret")
+	flag.String("memprofile", "", "write memory profile to `file`")
+
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
@@ -49,18 +53,21 @@ func main() {
 	if viper.GetString("storage") == "gs" {
 		GCEProject := viper.GetString("gce_project")
 		GSBucket := viper.GetString("gs_bucket")
-		GSCredencials := viper.GetString("gs_credentials")
+		CSCredentials := viper.GetString("gs_credentials")
 		if GCEProject == "" {
 			log.Fatalln("GoogleStorage project should be setted")
 		}
 		if GSBucket == "" {
 			log.Fatalln("GoogleStorage bucket should be setted")
 		}
-		if GSCredencials == "" {
+		if CSCredentials == "" {
 			log.Fatalln("GoogleStorage Credentials shold be setted")
 		}
-
-		sd, err = storage.NewGoogleStorageDriver(GCEProject, GSBucket, GSCredencials)
+		sd = &storage.GoogleStorageDriver{
+			BucketName:  GSBucket,
+			ProjectName: GCEProject,
+			Credentials: CSCredentials,
+		}
 		if err != nil {
 			log.Fatalf("can not create GoogleStorage Driver: %v", err)
 		}
@@ -78,5 +85,20 @@ func main() {
 		APIKey:    viper.GetString("cloudinary_apikey"),
 		APISecret: viper.GetString("cloudinary_apisecret"),
 	}
+
+	defer func() {
+		memProfile := viper.GetString("memprofile")
+		if memProfile != "" {
+			f, err := os.Create(memProfile)
+			if err != nil {
+				log.Fatal("could not create memory profile: ", err)
+			}
+			runtime.GC() // get up-to-date statistics
+			if err := pprof.WriteHeapProfile(f); err != nil {
+				log.Fatal("could not write memory profile: ", err)
+			}
+			f.Close()
+		}
+	}()
 	ci.Import(sd)
 }

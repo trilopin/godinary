@@ -11,29 +11,27 @@ import (
 
 // GoogleStorageDriver struct
 type GoogleStorageDriver struct {
-	bucketName string
-	bucket     *gs.BucketHandle
+	BucketName  string
+	ProjectName string
+	Credentials string
+	bucket      *gs.BucketHandle
 }
 
-// NewGoogleStorageDriver constructs new GoogleStorageDriver
-func NewGoogleStorageDriver(project string, bucket string, credentials string) (*GoogleStorageDriver, error) {
-	var gsw GoogleStorageDriver
-	var err error
+// Init initialises bucket connection
+func (gsw *GoogleStorageDriver) Init() error {
 	var client *gs.Client
-
-	gsw.bucketName = bucket
-
+	var err error
 	ctx := context.Background()
-	if credentials == "" {
+	if gsw.Credentials == "" {
 		client, err = gs.NewClient(ctx)
 	} else {
-		client, err = gs.NewClient(ctx, option.WithServiceAccountFile(credentials))
+		client, err = gs.NewClient(ctx, option.WithServiceAccountFile(gsw.Credentials))
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
-	gsw.bucket = client.Bucket(gsw.bucketName)
-	return &gsw, nil
+	gsw.bucket = client.Bucket(gsw.BucketName)
+	return nil
 }
 
 // Write in Google storage a bytearray

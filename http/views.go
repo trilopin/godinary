@@ -34,6 +34,13 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		var reader io.ReadCloser
 		var dSem float64
 
+		err := opts.StorageDriver.Init()
+		if err != nil {
+			log.Printf("can't initalise storage: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
 		t1 := time.Now()
 		if r.Method != "GET" {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -124,6 +131,12 @@ func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		var reader io.ReadCloser
 		var err error
 
+		err = opts.StorageDriver.Init()
+		if err != nil {
+			log.Printf("can't initalise storage: %v", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
 		t1 := time.Now()
 		if r.Method != "GET" {
 			w.WriteHeader(http.StatusMethodNotAllowed)

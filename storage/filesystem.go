@@ -18,6 +18,11 @@ func NewFileDriver(base string) *FileDriver {
 	return &fs
 }
 
+// Init does nothing in this implementation
+func (fs *FileDriver) Init() error {
+	return nil
+}
+
 // Write in filesystem a bytearray
 func (fs *FileDriver) Write(buf []byte, hash string, prefix string) error {
 	dir, newHash := makeFoldersFromHash(hash, fs.base+prefix, 3)

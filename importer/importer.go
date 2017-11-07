@@ -75,25 +75,25 @@ func (cr *CloudinaryResponse) Upload(sd storage.Driver) {
 			ht := sha256.New()
 			ht.Write([]byte(name))
 			hash := hex.EncodeToString(ht.Sum(nil))
-
-			resp, err := http.Get(r.URL)
-			t2 := time.Now()
-			if err != nil {
-				log.Println("Failed to download", r.URL)
-				return
-			}
-			defer resp.Body.Close()
-			body, err := ioutil.ReadAll(resp.Body)
-
-			if err != nil {
-				log.Println("Failed to parse body", r.URL)
-				return
-			}
-
 			reader, err := sd.NewReader(hash, "upload/")
+			// close reader if object exists
 			if err == nil {
-				defer reader.Close()
+				reader.Close()
 			} else {
+				// reader is nil, get and save
+				resp, err := http.Get(r.URL)
+				t2 := time.Now()
+				if err != nil {
+					log.Println("Failed to download", r.URL)
+					return
+				}
+				body, err := ioutil.ReadAll(resp.Body)
+				resp.Body.Close()
+
+				if err != nil {
+					log.Println("Failed to parse body", r.URL)
+					return
+				}
 				sd.Write(body, hash, "upload/")
 				fmt.Printf("\nget %s, write %s - %s ", t2.Sub(t1), time.Since(t2), r.URL)
 			}

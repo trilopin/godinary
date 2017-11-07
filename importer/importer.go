@@ -67,6 +67,12 @@ func (cr *CloudinaryResponse) Upload(sd storage.Driver) {
 	var wg sync.WaitGroup
 	for _, r := range cr.Resources {
 		wg.Add(1)
+		err := sd.Init() // force connection
+		if err != nil {
+			fmt.Printf("can't initalise storage: %v", err)
+			return
+		}
+
 		go func(r CloudinaryResult, sd storage.Driver) {
 			defer wg.Done()
 			t1 := time.Now()

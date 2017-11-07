@@ -7,6 +7,7 @@ import (
 
 // Driver is the interface for saving images
 type Driver interface {
+	Init() error
 	Write(buf []byte, hash string, prefix string) error
 	NewReader(hash string, prefix string) (io.ReadCloser, error)
 }

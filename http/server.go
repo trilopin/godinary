@@ -31,7 +31,7 @@ type ServerOpts struct {
 	FSBase              string
 	GCEProject          string
 	GSBucket            string
-	GSCredencials       string
+	GSCredentials       string
 }
 
 // ------------------------------------

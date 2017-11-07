@@ -74,20 +74,20 @@ func main() {
 	if viper.GetString("storage") == "gs" {
 		opts.GCEProject = viper.GetString("gce_project")
 		opts.GSBucket = viper.GetString("gs_bucket")
-		opts.GSCredencials = viper.GetString("gs_credentials")
+		opts.GSCredentials = viper.GetString("gs_credentials")
 		if opts.GCEProject == "" {
 			log.Fatalln("GoogleStorage project should be setted")
 		}
 		if opts.GSBucket == "" {
 			log.Fatalln("GoogleStorage bucket should be setted")
 		}
-		if opts.GSCredencials == "" {
+		if opts.GSCredentials == "" {
 			log.Fatalln("GoogleStorage Credentials shold be setted")
 		}
-
-		opts.StorageDriver, err = storage.NewGoogleStorageDriver(opts.GCEProject, opts.GSBucket, opts.GSCredencials)
-		if err != nil {
-			log.Fatalf("can not create GoogleStorage Driver: %v", err)
+		opts.StorageDriver = &storage.GoogleStorageDriver{
+			BucketName:  opts.GSBucket,
+			ProjectName: opts.GCEProject,
+			Credentials: opts.GSCredentials,
 		}
 	} else {
 		opts.FSBase = viper.GetString("fs_base")

@@ -3,7 +3,6 @@ package http
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -169,7 +168,6 @@ func auth(auth map[string]string, next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "missing", http.StatusForbidden)
 			return
 		}
-		fmt.Println(APIKey, signature)
 		storedSecret, ok := auth[APIKey]
 		if !ok {
 			http.Error(w, "notok", http.StatusForbidden)

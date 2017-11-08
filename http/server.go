@@ -1,6 +1,8 @@
 package http
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"log"
 	"net/http"
 	"net/url"
@@ -32,6 +34,7 @@ type ServerOpts struct {
 	GCEProject          string
 	GSBucket            string
 	GSCredentials       string
+	APIAuth             map[string]string
 }
 
 // ------------------------------------
@@ -53,6 +56,7 @@ func Serve(opts *ServerOpts) {
 	mux.Handle("/up", Middleware(Up, opts))
 	mux.Handle("/image/fetch/", Middleware(Fetch(opts), opts))
 	mux.Handle("/image/upload/", Middleware(Upload(opts), opts))
+	mux.Handle("/v1_0/image/upload", AuthMiddleware(APIUpload(opts), opts))
 	server := http.Server{
 		Addr:    ":" + opts.Port,
 		Handler: mux,
@@ -105,6 +109,11 @@ func Middleware(handler func(w http.ResponseWriter, r *http.Request), opts *Serv
 	return raven.RecoveryHandler(logger(domainValidator(opts.Domain, refererValidator(opts.AllowedReferers, handler))))
 }
 
+// AuthMiddleware composes all middlewares + auth
+func AuthMiddleware(handler func(w http.ResponseWriter, r *http.Request), opts *ServerOpts) http.HandlerFunc {
+	return raven.RecoveryHandler(logger(domainValidator(opts.Domain, refererValidator(opts.AllowedReferers, auth(opts.APIAuth, handler)))))
+}
+
 // domainValidator is a middleware to check Host Header against configured domain
 func domainValidator(domain string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -144,6 +153,34 @@ func refererValidator(allowedReferers []string, next http.HandlerFunc) http.Hand
 				return
 			}
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+// auth validates API_KEY and API_SIGNATURE against shared API_SECRET
+func auth(auth map[string]string, next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		APIKey := r.FormValue("apikey")
+		signature := r.FormValue("signature")
+		timestamp := r.FormValue("timestamp")
+		if APIKey == "" || signature == "" {
+			http.Error(w, "", http.StatusForbidden)
+			return
+		}
+		storedSecret, ok := auth[APIKey]
+		if !ok {
+			http.Error(w, "", http.StatusForbidden)
+			return
+		}
+
+		ht := sha256.New()
+		ht.Write([]byte(APIKey + timestamp + storedSecret))
+		hash := hex.EncodeToString(ht.Sum(nil))
+		if hash != signature {
+			http.Error(w, "", http.StatusForbidden)
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	})
 }

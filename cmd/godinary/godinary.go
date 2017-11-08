@@ -16,6 +16,7 @@ import (
 func setupConfig() {
 	// flags setup
 	flag.String("domain", "", "Domain to validate with Host header, it will deny any other request (if port is not standard must be passed as host:port)")
+	flag.String("auth", "", "List of apikey,apisecret (one per line) allowed to use API")
 	flag.String("sentry_url", "", "Sentry DSN for error tracking")
 	flag.String("release", "", "Release hash to notify sentry")
 	flag.String("allow_hosts", "", "Domains authorized to ask godinary separated by commas (A comma at the end allows empty referers)")
@@ -69,6 +70,16 @@ func main() {
 		MaxRequestPerDomain: viper.GetInt("max_request_domain"),
 		SSLDir:              viper.GetString("ssl_dir"),
 		CDNTTL:              viper.GetString("cdn_ttl"),
+	}
+	opts.APIAuth = make(map[string]string)
+	auth := viper.GetString("auth")
+	if auth != "" {
+		parts := strings.Split(auth, ",")
+		if len(parts) == 2 {
+			opts.APIAuth[parts[0]] = parts[1]
+		} else {
+			log.Fatalln("Invalid auth ", parts)
+		}
 	}
 
 	if viper.GetString("storage") == "gs" {

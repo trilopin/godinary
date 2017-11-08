@@ -160,7 +160,6 @@ func refererValidator(allowedReferers []string, next http.HandlerFunc) http.Hand
 // auth validates API_KEY and API_SIGNATURE against shared API_SECRET
 func auth(auth map[string]string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// allowed := false
 		APIKey := r.FormValue("apikey")
 		signature := r.FormValue("signature")
 		timestamp := r.FormValue("timestamp")

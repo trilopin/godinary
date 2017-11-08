@@ -164,12 +164,12 @@ func auth(auth map[string]string, next http.HandlerFunc) http.HandlerFunc {
 		signature := r.FormValue("signature")
 		timestamp := r.FormValue("timestamp")
 		if APIKey == "" || signature == "" {
-			http.Error(w, "missing", http.StatusForbidden)
+			http.Error(w, "", http.StatusForbidden)
 			return
 		}
 		storedSecret, ok := auth[APIKey]
 		if !ok {
-			http.Error(w, "notok", http.StatusForbidden)
+			http.Error(w, "", http.StatusForbidden)
 			return
 		}
 
@@ -177,7 +177,7 @@ func auth(auth map[string]string, next http.HandlerFunc) http.HandlerFunc {
 		ht.Write([]byte(APIKey + timestamp + storedSecret))
 		hash := hex.EncodeToString(ht.Sum(nil))
 		if hash != signature {
-			http.Error(w, hash, http.StatusForbidden)
+			http.Error(w, "", http.StatusForbidden)
 			return
 		}
 

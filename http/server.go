@@ -53,7 +53,7 @@ func Serve(opts *ServerOpts) {
 		Routes: make(map[string]func(http.ResponseWriter, *http.Request)),
 	}
 	mux.Handle("/robots.txt", Middleware(RobotsTXT, opts))
-	mux.Handle("/up", Middleware(Up, opts))
+	mux.Handle("/up", Up)
 	mux.Handle("/image/fetch/", Middleware(Fetch(opts), opts))
 	mux.Handle("/image/upload/", Middleware(Upload(opts), opts))
 	mux.Handle("/v1_0/image/upload", AuthMiddleware(APIUpload(opts), opts))

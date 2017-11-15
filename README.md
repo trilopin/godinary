@@ -16,9 +16,14 @@ git clone https://github.com/trilopin/godinary
 Without SSl and with gin live reloading in port 3000:
 - mkdir data && cp .env.example .env
 - make build-dev
-- make run 
+- make run
 
 ### Run tests
+Manage google storage credentials
+- openssl enc -in godinary-e7f1383f7309.json -aes-256-cbc -pass env:GODKEY > godinary-e7f1383f7309.json.enc
+- openssl enc -in godinary-e7f1383f7309.json.enc -d -aes-256-cbc -pass env:GODKEY > godinary-e7f1383f7309.json
+
+Run tests
 - make build-test
 
 ### Configuration

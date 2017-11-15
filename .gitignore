@@ -37,3 +37,5 @@ server.key
 server.pem
 data
 bin
+godinary-*.json
+*.pprof

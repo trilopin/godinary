@@ -1,4 +1,4 @@
-services: 
+services:
   - docker
 
 addons:
@@ -6,5 +6,8 @@ addons:
     packages:
       - docker-ce
 
-script: 
+before_script:
+  - openssl enc -in godinary-e7f1383f7309.json.enc -d -aes-256-cbc -pass env:GODKEY > godinary-e7f1383f7309.json
+
+script:
   - make build-test

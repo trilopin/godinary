@@ -51,6 +51,7 @@ func writeErr(w http.ResponseWriter, msg string, status int) {
 func APIUpload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
 		if r.Method != "POST" {
 			writeErr(w, "Method not allowed", http.StatusMethodNotAllowed)
 			return

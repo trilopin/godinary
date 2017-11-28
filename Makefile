@@ -24,3 +24,8 @@ run:
 	docker run --rm -p 3000:3000 --env-file .env \
 	       -v $$PWD/:/go/src/github.com/trilopin/godinary/ \
 		   -ti godinary:dev
+
+sh-dev:
+	docker run --rm -p 3000:3000 --env-file .env \
+	       -v $$PWD/:/go/src/github.com/trilopin/godinary/ \
+		   -ti godinary:dev bash

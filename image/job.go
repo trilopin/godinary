@@ -34,7 +34,7 @@ func (job *Job) Parse(fetchData string) error {
 	var err error
 
 	parts := strings.SplitN(fetchData, "/", 2)
-	if len(parts) > 1 && parts[0] != "http:" {
+	if len(parts) > 1 && parts[0] != "http:" && parts[0] != "https:" {
 		filters := strings.Split(parts[0], ",")
 		for _, v := range filters {
 			filter := strings.Split(v, "_")
@@ -89,6 +89,11 @@ func (job *Job) Parse(fetchData string) error {
 		offset = len(parts[0]) + 1
 	}
 	job.Source.URL, _ = url.QueryUnescape(fetchData[offset:])
+	// Temporary hack until complete rework of parsing
+	if strings.Count(job.Source.URL, "/") == 1 {
+		parts = strings.Split(job.Source.URL, "/")
+		job.Source.URL = parts[1]
+	}
 
 	ht := sha256.New()
 	ht.Write([]byte(fetchData + string(job.Target.Format)))

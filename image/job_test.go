@@ -11,6 +11,7 @@ import (
 )
 
 const testURL = "http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
+const testSecureURL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
 
 var testFiles = map[string]string{
 	"jpg":  "testdata/fiveyears.jpg",
@@ -40,6 +41,21 @@ var parserCases = []struct {
 		"without filters",
 	},
 	{
+		testSecureURL,
+		Job{
+			Source: Image{
+				URL:  testSecureURL,
+				Hash: "191fef766e83be494e6b7bbd6e205a7ec14e27e43596a8a63c672ca19e7252ba",
+			},
+			Target: Image{
+				Format: bimg.JPEG,
+				Hash:   "fbfcb873e1b899593b0ef2a8a76c44105d08b991a2bf4a99129cde3f2f3c880b",
+			},
+			Filters: map[string]string{"crop": "scale"},
+		},
+		"without filters secure",
+	},
+	{
 		"w_400/" + testURL,
 		Job{
 			Source: Image{
@@ -54,6 +70,22 @@ var parserCases = []struct {
 			Filters: map[string]string{"crop": "scale"},
 		},
 		"with one filter",
+	},
+	{
+		"w_400/" + testSecureURL,
+		Job{
+			Source: Image{
+				URL:  testSecureURL,
+				Hash: "191fef766e83be494e6b7bbd6e205a7ec14e27e43596a8a63c672ca19e7252ba",
+			},
+			Target: Image{
+				Width:  400,
+				Format: bimg.JPEG,
+				Hash:   "f5ffba22a3a06cad388892a8564e7a5130a279769b71b9a004e308c2764a6341",
+			},
+			Filters: map[string]string{"crop": "scale"},
+		},
+		"with one filter secure",
 	},
 	{
 		"w_400,c_limit,h_600,f_jpg/" + testURL,
@@ -190,6 +222,38 @@ var parserCases = []struct {
 			Filters: map[string]string{"crop": "scale"},
 		},
 		"plain uploaded file without filters",
+	},
+	{
+		"w_400,c_limit,h_600,f_jpeg/ffolder/file.jpg",
+		Job{
+			Source: Image{
+				URL:  "file.jpg",
+				Hash: "91a721b7244245b40e368346edc97c311439a0260e4d51f60023eb1bc86d7238",
+			},
+			Target: Image{
+				Width:  400,
+				Height: 600,
+				Format: bimg.JPEG,
+				Hash:   "2ed3a246c9e88ba1f8cae9e3742dd07cd530bd7af76b38b4dac86c97355e6c8c",
+			},
+			Filters: map[string]string{"crop": "limit"},
+		},
+		"plain uploaded foldered file without filters",
+	},
+	{
+		"folder/file.jpg",
+		Job{
+			Source: Image{
+				URL:  "file.jpg",
+				Hash: "91a721b7244245b40e368346edc97c311439a0260e4d51f60023eb1bc86d7238",
+			},
+			Target: Image{
+				Format: bimg.JPEG,
+				Hash:   "e9978594ecc62a2067f73df44128cbdce4e12eee68449342f88765e5355a4972",
+			},
+			Filters: map[string]string{"crop": "scale"},
+		},
+		"plain uploaded foldered file with filters",
 	},
 }
 

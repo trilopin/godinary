@@ -183,6 +183,98 @@ func TestParse(t *testing.T) {
 	}
 }
 
+func TestParseFilters(t *testing.T) {
+	cases := []struct {
+		input       string
+		expected    *Job
+		err         error
+		description string
+	}{
+		{
+			"w_400",
+			&Job{Target: Image{Width: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "one filter - width",
+		},
+		{
+			"h_400",
+			&Job{Target: Image{Height: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "one filter - height",
+		},
+		{
+			"c_limit",
+			&Job{Target: Image{Format: bimg.JPEG}, Filters: map[string]string{"crop": "limit"}},
+			nil, "only crop",
+		},
+		{
+			"h_400,w_400",
+			&Job{Target: Image{Height: 400, Width: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "width - height",
+		},
+		{
+			"h_400,w_400,f_png,q_55,c_limit",
+			&Job{Target: Image{Height: 400, Width: 400, Format: bimg.PNG, Quality: 55}, Filters: map[string]string{"crop": "limit"}},
+			nil, "all filters",
+		},
+		{"c_fake", nil, errors.New("crop \"fake\" not allowed"), "Crop  not accepted"},
+	}
+	for _, test := range cases {
+		job := NewJob()
+		err := job.parseFilters(test.input)
+		assert.Equal(t, test.err, err, test.description)
+		if err == nil {
+			assert.Equal(t, test.expected.Target.Height, job.Target.Height, test.description)
+			assert.Equal(t, test.expected.Target.Width, job.Target.Width, test.description)
+			assert.Equal(t, test.expected.Target.Format, job.Target.Format, test.description)
+			assert.Equal(t, test.expected.Target.Quality, job.Target.Quality, test.description)
+			assert.Equal(t, test.expected.Filters, job.Filters, test.description)
+		} else {
+			t.Log(err)
+		}
+	}
+}
+
+func TestParseCrop(t *testing.T) {
+	cases := []struct {
+		crop        string
+		expected    string
+		err         error
+		description string
+	}{
+		{"scale", "scale", nil, "Scale"},
+		{"limit", "limit", nil, "Limit"},
+		{"fit", "fit", nil, "Fit"},
+		{"fake", "scale", errors.New("crop \"fake\" not allowed"), "Error case not accepted"},
+	}
+	for _, test := range cases {
+		crop, err := parseCrop(test.crop)
+		assert.Equal(t, test.err, err, test.description)
+		assert.Equal(t, test.expected, crop, test.description)
+	}
+}
+
+func TestParseFormat(t *testing.T) {
+	cases := []struct {
+		format      string
+		webp        bool
+		expected    bimg.ImageType
+		err         error
+		description string
+	}{
+		{"jpg", false, bimg.JPEG, nil, "jpg format"},
+		{"jpeg", false, bimg.JPEG, nil, "jpeg format"},
+		{"png", false, bimg.PNG, nil, "png format"},
+		{"gif", false, bimg.GIF, nil, "gif format"},
+		{"auto", false, bimg.JPEG, nil, "auto without webp"},
+		// {"auto", true, bimg.WEBP, nil, "auto with webp"},
+		{"fake", false, bimg.JPEG, errors.New("format \"fake\" not allowed"), "Error case not accepted"},
+	}
+	for _, test := range cases {
+		format, err := parseFormat(test.format, test.webp)
+		assert.Equal(t, test.err, err, test.description)
+		assert.Equal(t, test.expected, format, test.description)
+	}
+}
+
 var parserErrorCases = []struct {
 	url         string
 	err         error

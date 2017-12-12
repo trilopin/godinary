@@ -11,6 +11,7 @@ import (
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
+// Hasher interface
 type Hasher interface {
 	Hash(s string) string
 }
@@ -99,13 +100,10 @@ func (job *Job) parseFilters(s string) error {
 			if job.Target.Format, err = parseFormat(filter[1], job.AcceptWebp); err != nil {
 				return err
 			}
-
 		case "c":
-			crop, err := parseCrop(filter[1])
-			if err != nil {
+			if job.Filters["crop"], err = parseCrop(filter[1]); err != nil {
 				return err
 			}
-			job.Filters["crop"] = crop
 		}
 	}
 	return nil
@@ -128,7 +126,6 @@ func (job *Job) Parse(fetchData string) error {
 		parts = strings.Split(job.Source.URL, "/")
 		job.Source.URL = parts[1]
 	}
-
 	job.Target.Hash = job.Hasher.Hash(fetchData + string(job.Target.Format))
 	job.Source.Hash = job.Hasher.Hash(job.Source.URL)
 

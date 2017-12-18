@@ -29,157 +29,30 @@ func (fh *FakeHasher) Hash(s string) string {
 func TestParse(t *testing.T) {
 	fakeHasher := &FakeHasher{}
 	cases := []struct {
-		url         string
-		expected    Job
+		input       string
+		URL         string
 		description string
 	}{
-		{
-			testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "scale"},
-				Hasher:  fakeHasher,
-			},
-			"without filters",
-		},
-		{
-			testSecureURL,
-			Job{
-				Source:  Image{URL: testSecureURL, Hash: ""},
-				Target:  Image{Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "scale"},
-				Hasher:  fakeHasher,
-			},
-			"without filters secure",
-		},
-		{
-			"w_400/" + testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Width: 400, Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "scale"},
-				Hasher:  fakeHasher,
-			},
-			"with one filter",
-		},
-		{
-			"w_400/" + testSecureURL,
-			Job{
-				Source:  Image{URL: testSecureURL, Hash: ""},
-				Target:  Image{Width: 400, Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "scale"},
-				Hasher:  fakeHasher,
-			},
-			"with one filter secure",
-		},
-		{
-			"w_400,c_limit,h_600,f_jpg/" + testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"with multiple filter jpg",
-		},
-		{
-			"w_400,c_limit,h_600,f_webp,q_50/" + testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Quality: 50, Format: bimg.WEBP, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"with multiple filter webp",
-		},
-		{
-			"w_400,c_limit,h_600,f_auto,q_65/" + testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Quality: 65, Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"with multiple filter auto jpeg",
-		},
-		{
-			"w_400,c_limit,h_600,f_png/" + testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Format: bimg.PNG, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"with multiple filter png",
-		},
-		{
-			"w_400,c_limit,h_600,f_gif/" + testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Format: bimg.GIF, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"with multiple filter gif",
-		},
-		{
-			"w_400,c_limit,h_600,f_jpeg/" + testURL,
-			Job{
-				Source:  Image{URL: testURL, Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"with multiple filter jpeg",
-		},
-		{
-			"w_400,c_limit,h_600,f_jpeg/file.jpg",
-			Job{
-				Source:  Image{URL: "file.jpg", Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"plain uploaded file with multiple filter jpeg",
-		},
-		{
-			"file.jpg",
-			Job{
-				Source:  Image{URL: "file.jpg", Hash: ""},
-				Target:  Image{Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "scale"},
-				Hasher:  fakeHasher,
-			},
-			"plain uploaded file without filters",
-		},
-		{
-			"w_400,c_limit,h_600,f_jpeg/ffolder/file.jpg",
-			Job{
-				Source:  Image{URL: "file.jpg", Hash: ""},
-				Target:  Image{Width: 400, Height: 600, Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "limit"},
-				Hasher:  fakeHasher,
-			},
-			"plain uploaded foldered file without filters",
-		},
-		{
-			"folder/file.jpg",
-			Job{
-				Source:  Image{URL: "file.jpg", Hash: ""},
-				Target:  Image{Format: bimg.JPEG, Hash: ""},
-				Filters: map[string]string{"crop": "scale"},
-				Hasher:  fakeHasher,
-			},
-			"plain uploaded foldered file with filters",
-		},
+		// fetch cases
+		{testURL, testURL, "fetch without filters"},
+		{testSecureURL, testSecureURL, "fetch secure without filters"},
+		{"w_400/" + testURL, testURL, "fetch with filter"},
+		{"w_400/" + testURL, testURL, "fetch with multiple filter"},
+		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, testSecureURL, "fetch secure with filter"},
+		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, testSecureURL, "fetch secure with multiple filter"},
+		// upload cases
+		{"file.jpg", "file.jpg", "upload without filters"},
+		{"folder/file.jpg", "file.jpg", "upload without filters and folder"},
+		{"w_400/file.jpg", "file.jpg", "upload with one filters"},
+		{"w_400,c_limit,h_600,f_jpeg/file.jpg", "file.jpg", "upload with multiple filters"},
+		{"w_400,c_limit,h_600,f_jpeg/folder/file.jpg", "file.jpg", "upload with multiple filters and folder"},
 	}
 	for _, test := range cases {
 		job := NewJob()
 		job.Hasher = fakeHasher
-		err := job.Parse(test.url)
+		err := job.Parse(test.input)
 		assert.Nil(t, err)
-		assert.Equal(t, test.expected, *job, test.description)
+		assert.Equal(t, test.URL, job.Source.URL, test.description)
 	}
 }
 
@@ -193,22 +66,37 @@ func TestParseFilters(t *testing.T) {
 		{
 			"w_400",
 			&Job{Target: Image{Width: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
-			nil, "one filter - width",
-		},
-		{
-			"h_400",
-			&Job{Target: Image{Height: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
-			nil, "one filter - height",
-		},
-		{
-			"c_limit",
-			&Job{Target: Image{Format: bimg.JPEG}, Filters: map[string]string{"crop": "limit"}},
-			nil, "only crop",
+			nil, "only width",
 		},
 		{
 			"h_400,w_400",
 			&Job{Target: Image{Height: 400, Width: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
 			nil, "width - height",
+		},
+		{
+			"f_png",
+			&Job{Target: Image{Format: bimg.PNG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "png format",
+		},
+		{
+			"f_gif",
+			&Job{Target: Image{Format: bimg.GIF}, Filters: map[string]string{"crop": "scale"}},
+			nil, "gif format",
+		},
+		{
+			"f_webp",
+			&Job{Target: Image{Format: bimg.WEBP}, Filters: map[string]string{"crop": "scale"}},
+			nil, "gif format",
+		},
+		{
+			"h_400",
+			&Job{Target: Image{Height: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "only height",
+		},
+		{
+			"c_limit",
+			&Job{Target: Image{Format: bimg.JPEG}, Filters: map[string]string{"crop": "limit"}},
+			nil, "only crop",
 		},
 		{
 			"h_400,w_400,f_png,q_55,c_limit",

@@ -30,29 +30,67 @@ func TestParse(t *testing.T) {
 	fakeHasher := &FakeHasher{}
 	cases := []struct {
 		input       string
-		URL         string
+		isFetch     bool
+		job         Job
 		description string
 	}{
-		// fetch cases
-		{testURL, testURL, "fetch without filters"},
-		{testSecureURL, testSecureURL, "fetch secure without filters"},
-		{"w_400/" + testURL, testURL, "fetch with filter"},
-		{"w_400/" + testURL, testURL, "fetch with multiple filter"},
-		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, testSecureURL, "fetch secure with filter"},
-		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, testSecureURL, "fetch secure with multiple filter"},
-		// upload cases
-		{"file.jpg", "file.jpg", "upload without filters"},
-		{"folder/file.jpg", "file.jpg", "upload without filters and folder"},
-		{"w_400/file.jpg", "file.jpg", "upload with one filters"},
-		{"w_400,c_limit,h_600,f_jpeg/file.jpg", "file.jpg", "upload with multiple filters"},
-		{"w_400,c_limit,h_600,f_jpeg/folder/file.jpg", "file.jpg", "upload with multiple filters and folder"},
+		{
+			"w_400,c_limit,h_600,f_auto,q_65/" + testURL,
+			true,
+			Job{
+				Source: Image{
+					URL:  testURL,
+					Hash: "",
+				},
+				Target: Image{
+					Width:   400,
+					Height:  600,
+					Quality: 65,
+					Format:  bimg.JPEG,
+					Hash:    "",
+				},
+				Filters: map[string]string{"crop": "limit"},
+				Hasher:  fakeHasher,
+			},
+			"multiple filters",
+		},
 	}
 	for _, test := range cases {
 		job := NewJob()
 		job.Hasher = fakeHasher
-		err := job.Parse(test.input)
+		err := job.Parse(test.input, test.isFetch)
 		assert.Nil(t, err)
-		assert.Equal(t, test.URL, job.Source.URL, test.description)
+		assert.Equal(t, test.job, *job, test.description)
+	}
+}
+
+func TestParseURL(t *testing.T) {
+	cases := []struct {
+		input       string
+		isFetch     bool
+		image       string
+		filters     string
+		description string
+	}{
+		// fetch cases
+		{testURL, true, testURL, "", "fetch without filters"},
+		{testSecureURL, true, testSecureURL, "", "fetch secure without filters"},
+		{"w_400/" + testURL, true, testURL, "w_400", "fetch with filter"},
+		{"w_400/" + testURL, true, testURL, "w_400", "fetch with multiple filter"},
+		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, true, testSecureURL, "w_400,c_limit,h_600,f_jpg", "fetch secure with filter"},
+		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, true, testSecureURL, "w_400,c_limit,h_600,f_jpg", "fetch secure with multiple filter"},
+		// upload cases
+		{"file.jpg", false, "file.jpg", "", "upload without filters"},
+		{"folder/file.jpg", false, "file.jpg", "", "upload without filters and folder"},
+		{"w_400/file.jpg", false, "file.jpg", "w_400", "upload with one filters"},
+		{"w_400,c_limit,h_600,f_jpeg/file.jpg", false, "file.jpg", "w_400,c_limit,h_600,f_jpeg", "upload with multiple filters"},
+		{"w_400,c_limit,h_600,f_jpeg/folder/file.jpg", false, "file.jpg", "w_400,c_limit,h_600,f_jpeg", "upload with multiple filters and folder"},
+	}
+	for _, test := range cases {
+		filters, image, err := parseURL(test.input, test.isFetch)
+		assert.Nil(t, err)
+		assert.Equal(t, test.image, image, test.description)
+		assert.Equal(t, test.filters, filters, test.description)
 	}
 }
 
@@ -198,7 +236,7 @@ var parserErrorCases = []struct {
 func TestParseFail(t *testing.T) {
 	for _, test := range parserErrorCases {
 		img := NewJob()
-		err := img.Parse(test.url)
+		err := img.Parse(test.url, true)
 		assert.Equal(t, test.err, err, test.description)
 	}
 }

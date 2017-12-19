@@ -109,26 +109,40 @@ func (job *Job) parseFilters(s string) error {
 	return nil
 }
 
-// Parse creates a Job struct from string
-func (job *Job) Parse(fetchData string) error {
+// parseURL takes url data and returns ImageID (source URL or file),
+// filters and maybe an error
+func parseURL(s string, isFetch bool) (string, string, error) {
 	var offset int
+	var err error
+	var filters, URL string
 
-	parts := strings.SplitN(fetchData, "/", 2)
-	if len(parts) > 1 && parts[0] != "http:" && parts[0] != "https:" {
-		if err := job.parseFilters(parts[0]); err != nil {
-			return err
+	if isFetch {
+		parts := strings.SplitN(s, "/", 2)
+		if parts[0] != "http:" && parts[0] != "https:" {
+			filters = parts[0]
+			offset = len(parts[0]) + 1
 		}
-		offset = len(parts[0]) + 1
+		URL, err = url.QueryUnescape(s[offset:])
+	} else {
+		parts := strings.Split(s, "/")
+		URL, err = url.QueryUnescape(parts[len(parts)-1])
+		if len(parts) > 1 && strings.Count(parts[0], "_") > 0 {
+			filters = parts[0]
+		}
 	}
-	job.Source.URL, _ = url.QueryUnescape(fetchData[offset:])
-	// Temporary hack until complete rework of parsing
-	if strings.Count(job.Source.URL, "/") == 1 {
-		parts = strings.Split(job.Source.URL, "/")
-		job.Source.URL = parts[1]
+	return filters, URL, err
+}
+
+// Parse creates a Job struct from string
+func (job *Job) Parse(fetchData string, isFetch bool) error {
+	var err error
+	var filters string
+	filters, job.Source.URL, err = parseURL(fetchData, isFetch)
+	if err = job.parseFilters(filters); err != nil {
+		return err
 	}
 	job.Target.Hash = job.Hasher.Hash(fetchData + string(job.Target.Format))
 	job.Source.Hash = job.Hasher.Hash(job.Source.URL)
-
 	return nil
 }
 

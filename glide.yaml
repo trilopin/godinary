@@ -8,7 +8,7 @@ import:
   subpackages:
   - context
 - package: gopkg.in/h2non/bimg.v1
-  version: ^1.0.18
+  version: ^1.0.14
 - package: github.com/getsentry/raven-go
 - package: github.com/certifi/gocertifi
   version: ^2017.7.27

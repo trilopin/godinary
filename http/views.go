@@ -18,9 +18,13 @@ import (
 )
 
 // RobotsTXT return robots.txt valid for complete disallow
-func RobotsTXT(w http.ResponseWriter, r *http.Request) {
+func RobotsTXT(opts *ServerOpts) func(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "User-Agent: *")
-	fmt.Fprintln(w, "Disallow: /")
+	if opts.Index {
+		fmt.Fprintln(w, "Allow: /")
+	} else {
+		fmt.Fprintln(w, "Disallow: /")
+	}
 }
 
 // Up is the health check for application

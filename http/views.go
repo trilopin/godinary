@@ -18,12 +18,16 @@ import (
 )
 
 // RobotsTXT return robots.txt valid for complete disallow
-func RobotsTXT(opts *ServerOpts) func(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "User-Agent: *")
-	if opts.Index {
-		fmt.Fprintln(w, "Allow: /")
-	} else {
-		fmt.Fprintln(w, "Disallow: /")
+func RobotsTXT(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if (opts.Index) {
+			fmt.Fprintln(w, "User-Agent: *")
+			fmt.Fprintln(w, "Allow: /")
+		} else {
+			fmt.Fprintln(w, "User-Agent: *")
+			fmt.Fprintln(w, "Disallow: /")
+		}
+		return
 	}
 }
 

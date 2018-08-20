@@ -35,6 +35,7 @@ type ServerOpts struct {
 	GSBucket            string
 	GSCredentials       string
 	APIAuth             map[string]string
+	Index               bool
 }
 
 // ------------------------------------
@@ -52,7 +53,7 @@ func Serve(opts *ServerOpts) {
 	mux := &Mux{
 		Routes: make(map[string]func(http.ResponseWriter, *http.Request)),
 	}
-	mux.Handle("/robots.txt", Middleware(RobotsTXT, opts))
+	mux.Handle("/robots.txt", Middleware(RobotsTXT(opts), opts))
 	mux.Handle("/up", Up)
 	mux.Handle("/image/fetch/", Middleware(Fetch(opts), opts))
 	mux.Handle("/image/upload/", Middleware(Upload(opts), opts))

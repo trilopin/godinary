@@ -74,8 +74,8 @@ func testRobotsTXTIndex(t *testing.T) {
 		handler := http.HandlerFunc(RobotsTXT(opts))
 		handler.ServeHTTP(rr, req)
 
-		log.Printf("t", t)
-		log.Printf("rr", rr)
+		log.Printf(t)
+		log.Printf(rr)
 		assert.Equal(t, test.status, rr.Code, test.message)
 	}
 }
@@ -139,7 +139,6 @@ func TestFetchWithoutAcceptHeader(t *testing.T) {
 		assert.Equal(t, 141, size.Height, "height")
 		assert.Equal(t, 100, size.Width, "width")
 	}
-
 }
 
 var topDomainCases = []struct {

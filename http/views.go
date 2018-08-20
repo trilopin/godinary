@@ -17,7 +17,7 @@ import (
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
-// RobotsTXT return robots.txt valid for complete disallow
+// RobotsTXT return a valid robots.txt
 func RobotsTXT(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if (opts.Index) {

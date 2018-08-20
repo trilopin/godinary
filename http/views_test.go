@@ -50,6 +50,37 @@ var fetchCases = []struct {
 	},
 }
 
+var robotCases = []struct {
+	index     bool
+	expected  string
+}{
+	{
+		true,
+		"User-Agent: *\nAllow: /",
+	},
+	{
+		false,
+		"User-Agent: *\nDisallow: /",
+	},
+}
+
+func testRobotsTXTIndex(t *testing.T) {
+	for _, test := range robotCases {
+		opts := &ServerOpts{
+			Index: test.index,
+		}
+		req, _ := http.NewRequest("GET", "/robots.txt", nil)
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(RobotsTXT(opts))
+		handler.ServeHTTP(rr, req)
+
+		log.Printf("t", t)
+		log.Printf("rr", rr)
+		assert.Equal(t, test.status, rr.Code, test.message)
+	}
+}
+
+
 func setupModule() *ServerOpts {
 	//log.SetOutput(ioutil.Discard)
 	opts := &ServerOpts{

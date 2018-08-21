@@ -73,13 +73,9 @@ func testRobotsTXTIndex(t *testing.T) {
 		rr := httptest.NewRecorder()
 		handler := http.HandlerFunc(RobotsTXT(opts))
 		handler.ServeHTTP(rr, req)
-
-		log.Printf(t)
-		log.Printf(rr)
-		assert.Equal(t, test.status, rr.Code, test.message)
+		assert.Equal(t, test.expected, rr, "robots.txt")
 	}
 }
-
 
 func setupModule() *ServerOpts {
 	//log.SetOutput(ioutil.Discard)

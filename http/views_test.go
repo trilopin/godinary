@@ -50,6 +50,33 @@ var fetchCases = []struct {
 	},
 }
 
+var robotCases = []struct {
+	index     bool
+	expected  string
+}{
+	{
+		true,
+		"User-Agent: *\nAllow: /",
+	},
+	{
+		false,
+		"User-Agent: *\nDisallow: /",
+	},
+}
+
+func testRobotsTXTIndex(t *testing.T) {
+	for _, test := range robotCases {
+		opts := &ServerOpts{
+			Index: test.index,
+		}
+		req, _ := http.NewRequest("GET", "/robots.txt", nil)
+		rr := httptest.NewRecorder()
+		handler := http.HandlerFunc(RobotsTXT(opts))
+		handler.ServeHTTP(rr, req)
+		assert.Equal(t, test.expected, rr, "robots.txt")
+	}
+}
+
 func setupModule() *ServerOpts {
 	//log.SetOutput(ioutil.Discard)
 	opts := &ServerOpts{
@@ -108,7 +135,6 @@ func TestFetchWithoutAcceptHeader(t *testing.T) {
 		assert.Equal(t, 141, size.Height, "height")
 		assert.Equal(t, 100, size.Width, "width")
 	}
-
 }
 
 var topDomainCases = []struct {

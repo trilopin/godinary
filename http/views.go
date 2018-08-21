@@ -17,10 +17,18 @@ import (
 	bimg "gopkg.in/h2non/bimg.v1"
 )
 
-// RobotsTXT return robots.txt valid for complete disallow
-func RobotsTXT(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "User-Agent: *")
-	fmt.Fprintln(w, "Disallow: /")
+// RobotsTXT return a valid robots.txt
+func RobotsTXT(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if (opts.Index) {
+			fmt.Fprintln(w, "User-Agent: *")
+			fmt.Fprintln(w, "Allow: /")
+		} else {
+			fmt.Fprintln(w, "User-Agent: *")
+			fmt.Fprintln(w, "Disallow: /")
+		}
+		return
+	}
 }
 
 // Up is the health check for application

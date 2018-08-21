@@ -30,6 +30,7 @@ func setupConfig() {
 	flag.String("gce_project", "", "GS option: Sentry DSN for error tracking")
 	flag.String("gs_bucket", "", "GS option: Bucket name")
 	flag.String("gs_credentials", "", "GS option: Path to service account file with Google Storage credentials")
+	flag.Bool("index", false, "Deliver an indexable robots.txt")
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
@@ -70,6 +71,7 @@ func main() {
 		MaxRequestPerDomain: viper.GetInt("max_request_domain"),
 		SSLDir:              viper.GetString("ssl_dir"),
 		CDNTTL:              viper.GetString("cdn_ttl"),
+		Index:               viper.GetBool("index"),
 	}
 	opts.APIAuth = make(map[string]string)
 	auth := viper.GetString("auth")

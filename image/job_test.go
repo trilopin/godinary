@@ -11,6 +11,7 @@ import (
 )
 
 const testURL = "http://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
+const testSecureURL = "https://upload.wikimedia.org/wikipedia/commons/0/0c/Scarlett_Johansson_Césars_2014.jpg"
 
 var testFiles = map[string]string{
 	"jpg":  "testdata/fiveyears.jpg",
@@ -19,186 +20,184 @@ var testFiles = map[string]string{
 	"png":  "testdata/baboon.png",
 }
 
-var parserCases = []struct {
-	url         string
-	expected    Job
-	description string
-}{
-	{
-		testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Format: bimg.JPEG,
-				Hash:   "7568485b3a4ec0d74e9f0220d7c83fa4a6e4f1e4399f6903eda9483fdc8cdbc0",
-			},
-			Filters: map[string]string{"crop": "scale"},
-		},
-		"without filters",
-	},
-	{
-		"w_400/" + testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Width:  400,
-				Format: bimg.JPEG,
-				Hash:   "7499a3a704204fcc4811d8af480ba2f27916f37132c295687d0e3b9ae2ca992f",
-			},
-			Filters: map[string]string{"crop": "scale"},
-		},
-		"with one filter",
-	},
-	{
-		"w_400,c_limit,h_600,f_jpg/" + testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Width:  400,
-				Height: 600,
-				Format: bimg.JPEG,
-				Hash:   "00f5cefda635ef7e5a657e8363ea3fd15ef90028b9ea2f8372fa828631d506ca",
-			},
-			Filters: map[string]string{"crop": "limit"},
-		},
-		"with multiple filter jpg",
-	},
-	{
-		"w_400,c_limit,h_600,f_webp,q_50/" + testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Width:   400,
-				Height:  600,
-				Quality: 50,
-				Format:  bimg.WEBP,
-				Hash:    "ac799d0068df5144351ebed0f03fc846c6263c44cc543d31b8e6b33cc8f10103",
-			},
-			Filters: map[string]string{"crop": "limit"},
-		},
-		"with multiple filter webp",
-	},
-	{
-		"w_400,c_limit,h_600,f_auto,q_65/" + testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Width:   400,
-				Height:  600,
-				Quality: 65,
-				Format:  bimg.JPEG,
-				Hash:    "511d78de767e504b5b8c805011ed6e4d9c26ce76f9f36d50ff33e29a96d0c3a4",
-			},
-			Filters: map[string]string{"crop": "limit"},
-		},
-		"with multiple filter auto jpeg",
-	},
-	{
-		"w_400,c_limit,h_600,f_png/" + testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Width:  400,
-				Height: 600,
-				Format: bimg.PNG,
-				Hash:   "506c667899dc573c359a15d6063bd96f67f006b86f83b207294c51d8fc45affc",
-			},
-			Filters: map[string]string{"crop": "limit"},
-		},
-		"with multiple filter png",
-	},
-	{
-		"w_400,c_limit,h_600,f_gif/" + testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Width:  400,
-				Height: 600,
-				Format: bimg.GIF,
-				Hash:   "9ed8868e8d61f26e717129d0bac06787041e6048d1dcf5a906c23ac0efa3d4af",
-			},
-			Filters: map[string]string{"crop": "limit"},
-		},
-		"with multiple filter gif",
-	},
-	{
-		"w_400,c_limit,h_600,f_jpeg/" + testURL,
-		Job{
-			Source: Image{
-				URL:  testURL,
-				Hash: "9c2eb35928a2ee6ab8221c393fd306348b1235e282ecb32f0e41ca1bba6e90a9",
-			},
-			Target: Image{
-				Width:  400,
-				Height: 600,
-				Format: bimg.JPEG,
-				Hash:   "962aa5597fbb18caabfacfee9a1b612ad478341d4e8a573682788b773d874a37",
-			},
-			Filters: map[string]string{"crop": "limit"},
-		},
-		"with multiple filter jpeg",
-	},
-	{
-		"w_400,c_limit,h_600,f_jpeg/file.jpg",
-		Job{
-			Source: Image{
-				URL:  "file.jpg",
-				Hash: "91a721b7244245b40e368346edc97c311439a0260e4d51f60023eb1bc86d7238",
-			},
-			Target: Image{
-				Width:  400,
-				Height: 600,
-				Format: bimg.JPEG,
-				Hash:   "4d083201587ff3b5b4d268253c5070b650d64051b646a29bc352ea57878eb41b",
-			},
-			Filters: map[string]string{"crop": "limit"},
-		},
-		"plain uploaded file with multiple filter jpeg",
-	},
-	{
-		"file.jpg",
-		Job{
-			Source: Image{
-				URL:  "file.jpg",
-				Hash: "91a721b7244245b40e368346edc97c311439a0260e4d51f60023eb1bc86d7238",
-			},
-			Target: Image{
-				Format: bimg.JPEG,
-				Hash:   "79fba77d9b83b2a93091d8a50c51e98337ff9f500ada410aef0ed39ceb3b6aad",
-			},
-			Filters: map[string]string{"crop": "scale"},
-		},
-		"plain uploaded file without filters",
-	},
+type FakeHasher struct{}
+
+func (fh *FakeHasher) Hash(s string) string {
+	return ""
 }
 
 func TestParse(t *testing.T) {
-	for _, test := range parserCases {
+	fakeHasher := &FakeHasher{}
+	cases := []struct {
+		input       string
+		isFetch     bool
+		job         Job
+		description string
+	}{
+		{
+			"w_400,c_limit,h_600,f_auto,q_65/" + testURL,
+			true,
+			Job{
+				Source: Image{
+					URL:  testURL,
+					Hash: "",
+				},
+				Target: Image{
+					Width:   400,
+					Height:  600,
+					Quality: 65,
+					Format:  bimg.JPEG,
+					Hash:    "",
+				},
+				Filters: map[string]string{"crop": "limit"},
+				Hasher:  fakeHasher,
+			},
+			"multiple filters",
+		},
+	}
+	for _, test := range cases {
 		job := NewJob()
-		err := job.Parse(test.url)
+		job.Hasher = fakeHasher
+		err := job.Parse(test.input, test.isFetch)
 		assert.Nil(t, err)
-		assert.Equal(t, test.expected, *job, test.description)
+		assert.Equal(t, test.job, *job, test.description)
+	}
+}
+
+func TestParseURL(t *testing.T) {
+	cases := []struct {
+		input       string
+		isFetch     bool
+		image       string
+		filters     string
+		description string
+	}{
+		// fetch cases
+		{testURL, true, testURL, "", "fetch without filters"},
+		{testSecureURL, true, testSecureURL, "", "fetch secure without filters"},
+		{"w_400/" + testURL, true, testURL, "w_400", "fetch with filter"},
+		{"w_400/" + testURL, true, testURL, "w_400", "fetch with multiple filter"},
+		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, true, testSecureURL, "w_400,c_limit,h_600,f_jpg", "fetch secure with filter"},
+		{"w_400,c_limit,h_600,f_jpg/" + testSecureURL, true, testSecureURL, "w_400,c_limit,h_600,f_jpg", "fetch secure with multiple filter"},
+		// upload cases
+		{"file.jpg", false, "file.jpg", "", "upload without filters"},
+		{"folder/file.jpg", false, "file.jpg", "", "upload without filters and folder"},
+		{"w_400/file.jpg", false, "file.jpg", "w_400", "upload with one filters"},
+		{"w_400,c_limit,h_600,f_jpeg/file.jpg", false, "file.jpg", "w_400,c_limit,h_600,f_jpeg", "upload with multiple filters"},
+		{"w_400,c_limit,h_600,f_jpeg/folder/file.jpg", false, "file.jpg", "w_400,c_limit,h_600,f_jpeg", "upload with multiple filters and folder"},
+	}
+	for _, test := range cases {
+		filters, image, err := parseURL(test.input, test.isFetch)
+		assert.Nil(t, err)
+		assert.Equal(t, test.image, image, test.description)
+		assert.Equal(t, test.filters, filters, test.description)
+	}
+}
+
+func TestParseFilters(t *testing.T) {
+	cases := []struct {
+		input       string
+		expected    *Job
+		err         error
+		description string
+	}{
+		{
+			"w_400",
+			&Job{Target: Image{Width: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "only width",
+		},
+		{
+			"h_400,w_400",
+			&Job{Target: Image{Height: 400, Width: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "width - height",
+		},
+		{
+			"f_png",
+			&Job{Target: Image{Format: bimg.PNG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "png format",
+		},
+		{
+			"f_gif",
+			&Job{Target: Image{Format: bimg.GIF}, Filters: map[string]string{"crop": "scale"}},
+			nil, "gif format",
+		},
+		{
+			"f_webp",
+			&Job{Target: Image{Format: bimg.WEBP}, Filters: map[string]string{"crop": "scale"}},
+			nil, "gif format",
+		},
+		{
+			"h_400",
+			&Job{Target: Image{Height: 400, Format: bimg.JPEG}, Filters: map[string]string{"crop": "scale"}},
+			nil, "only height",
+		},
+		{
+			"c_limit",
+			&Job{Target: Image{Format: bimg.JPEG}, Filters: map[string]string{"crop": "limit"}},
+			nil, "only crop",
+		},
+		{
+			"h_400,w_400,f_png,q_55,c_limit",
+			&Job{Target: Image{Height: 400, Width: 400, Format: bimg.PNG, Quality: 55}, Filters: map[string]string{"crop": "limit"}},
+			nil, "all filters",
+		},
+		{"c_fake", nil, errors.New("crop \"fake\" not allowed"), "Crop  not accepted"},
+	}
+	for _, test := range cases {
+		job := NewJob()
+		err := job.parseFilters(test.input)
+		assert.Equal(t, test.err, err, test.description)
+		if err == nil {
+			assert.Equal(t, test.expected.Target.Height, job.Target.Height, test.description)
+			assert.Equal(t, test.expected.Target.Width, job.Target.Width, test.description)
+			assert.Equal(t, test.expected.Target.Format, job.Target.Format, test.description)
+			assert.Equal(t, test.expected.Target.Quality, job.Target.Quality, test.description)
+			assert.Equal(t, test.expected.Filters, job.Filters, test.description)
+		} else {
+			t.Log(err)
+		}
+	}
+}
+
+func TestParseCrop(t *testing.T) {
+	cases := []struct {
+		crop        string
+		expected    string
+		err         error
+		description string
+	}{
+		{"scale", "scale", nil, "Scale"},
+		{"limit", "limit", nil, "Limit"},
+		{"fit", "fit", nil, "Fit"},
+		{"fake", "scale", errors.New("crop \"fake\" not allowed"), "Error case not accepted"},
+	}
+	for _, test := range cases {
+		crop, err := parseCrop(test.crop)
+		assert.Equal(t, test.err, err, test.description)
+		assert.Equal(t, test.expected, crop, test.description)
+	}
+}
+
+func TestParseFormat(t *testing.T) {
+	cases := []struct {
+		format      string
+		webp        bool
+		expected    bimg.ImageType
+		err         error
+		description string
+	}{
+		{"jpg", false, bimg.JPEG, nil, "jpg format"},
+		{"jpeg", false, bimg.JPEG, nil, "jpeg format"},
+		{"png", false, bimg.PNG, nil, "png format"},
+		{"gif", false, bimg.GIF, nil, "gif format"},
+		{"auto", false, bimg.JPEG, nil, "auto without webp"},
+		// {"auto", true, bimg.WEBP, nil, "auto with webp"},
+		{"fake", false, bimg.JPEG, errors.New("format \"fake\" not allowed"), "Error case not accepted"},
+	}
+	for _, test := range cases {
+		format, err := parseFormat(test.format, test.webp)
+		assert.Equal(t, test.err, err, test.description)
+		assert.Equal(t, test.expected, format, test.description)
 	}
 }
 
@@ -237,7 +236,7 @@ var parserErrorCases = []struct {
 func TestParseFail(t *testing.T) {
 	for _, test := range parserErrorCases {
 		img := NewJob()
-		err := img.Parse(test.url)
+		err := img.Parse(test.url, true)
 		assert.Equal(t, test.err, err, test.description)
 	}
 }

@@ -51,7 +51,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		acceptHeader, ok := r.Header["Accept"]
 		job.AcceptWebp = ok && strings.Contains(acceptHeader[0], "image/webp")
 
-		if err := job.Parse(urlInfo); err != nil {
+		if err := job.Parse(urlInfo, true); err != nil {
 			raven.CaptureErrorAndWait(err, nil)
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return
@@ -147,7 +147,7 @@ func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 		acceptHeader, ok := r.Header["Accept"]
 		job.AcceptWebp = ok && strings.Contains(acceptHeader[0], "image/webp")
 
-		if err := job.Parse(urlInfo); err != nil {
+		if err := job.Parse(urlInfo, false); err != nil {
 			raven.CaptureErrorAndWait(err, nil)
 			http.Error(w, "Bad request", http.StatusBadRequest)
 			return

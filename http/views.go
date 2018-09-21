@@ -33,6 +33,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var reader io.ReadCloser
 		var dSem float64
+		var queryPath string
 
 		err := opts.StorageDriver.Init()
 		if err != nil {
@@ -46,7 +47,13 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		urlInfo := strings.Replace(r.URL.Path, "/image/fetch/", "", 1)
+
+		queryPath = r.URL.Path
+		if r.URL.RawQuery != "" {
+			queryPath += "?" + r.URL.RawQuery
+		}
+		urlInfo := strings.Replace(queryPath, "/image/fetch/", "", 1)
+
 		job := image.NewJob()
 		acceptHeader, ok := r.Header["Accept"]
 		job.AcceptWebp = ok && strings.Contains(acceptHeader[0], "image/webp")
@@ -102,6 +109,7 @@ func Fetch(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 				return
 			}
 		}
+
 		t2 := time.Now()
 
 		job.Source.ExtractInfo()
@@ -130,7 +138,7 @@ func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var reader io.ReadCloser
 		var err error
-
+		var queryPath string
 		err = opts.StorageDriver.Init()
 		if err != nil {
 			log.Printf("can't initalise storage: %v", err)
@@ -142,7 +150,12 @@ func Upload(opts *ServerOpts) func(http.ResponseWriter, *http.Request) {
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			return
 		}
-		urlInfo := strings.Replace(r.URL.Path, "/image/upload/", "", 1)
+
+		queryPath = r.URL.Path
+		if r.URL.RawQuery != "" {
+			queryPath += "?" + r.URL.RawQuery
+		}
+		urlInfo := strings.Replace(queryPath, "/image/upload/", "", 1)
 		job := image.NewJob()
 		acceptHeader, ok := r.Header["Accept"]
 		job.AcceptWebp = ok && strings.Contains(acceptHeader[0], "image/webp")

@@ -1,3 +1,6 @@
+NOTE: This is a project I did to practise with Go when I was learning the language, please don't use it in production.
+
+
 # godinary
 Image proxy with live resize &amp; tranformations
 
